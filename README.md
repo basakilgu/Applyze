@@ -1,195 +1,256 @@
+<div align="center">
+
 # Applyze
 
-**Türkiye'deki iş arayanlar için başvuru takip ve kariyer analiz uygulaması.**
+**Kariyer pusulası.**  
+Başvurularını sadece kayıt altına alma — yönünü gör.
 
-Kariyer.net, LinkedIn, Youthall ve Anbean gibi farklı platformlardaki başvurularını tek bir yerden takip et. Hangi aşamada elendiğini gör, stratejini geliştir.
+</div>
+
+<table align="center">
+<tr>
+<td><img src="docs/screenshots/03-onboarding-pusula.jpg" width="240" /></td>
+<td><img src="docs/screenshots/05-dashboard-hero.jpg" width="240" /></td>
+<td><img src="docs/screenshots/14-profile-hero.jpg" width="240" /></td>
+</tr>
+</table>
+
+---
+
+## Mevcut Durum
+
+Bu repo şu anda **tasarım ve frontend demosu** olarak çalışıyor. Tüm ekranlar mock veriyle render ediliyor; backend, kimlik doğrulama ve otomatik bilgi çekme henüz bağlı değil.
+
+| Katman | Durum |
+|--------|-------|
+| Tasarım sistemi (Yüz A / Yüz B + pusula sembolü) | ✅ Tamamlandı |
+| Onboarding (3 ekran), Liste, Özet, Profil ekranları | ✅ Tamamlandı (mock veriyle) |
+| Detay, başvuru ekleme, düzenleme, not ekleme akışı | ✅ Frontend hazır |
+| Aşama yönetimi ve ayarlar ekranları | ✅ Frontend hazır |
+| Milestone (Bir An) ekranı | ✅ Tamamlandı |
+| Backend (Supabase + RLS + Auth) | 🔄 Sonraki sprint |
+| Otomatik bilgi çekme (Kariyer.net, Youthall, Anbean) | 🕐 Planlanan |
+| Push bildirim ve elenme analizi | 🕐 Planlanan |
 
 ---
 
 ## Neden Applyze?
 
-Mevcut iş takip araçları (Huntr, Teal, Simplify) Türk platformlarını desteklemiyor. Applyze bu boşluğu kapatıyor:
+Mevcut iş takip araçları (Huntr, Teal, Simplify) Türk platformlarını desteklemiyor. Applyze bu boşluğu üç temel farklılaştırıcıyla kapatıyor:
 
 - **Yerel platform desteği** — Kariyer.net, Youthall, Anbean için link yapıştır, otomatik doldur
 - **Elenme analizi** — Hangi aşamada takıldığını gösteren içgörü ekranı
 - **Gizlilik öncelikli bildirimler** — Kilit ekranında şirket adı görünmez
 
----
-
-## Özellikler
-
-| Özellik | Durum |
-|---------|-------|
-| Email ve Google ile giriş | ✅ Sprint 1 |
-| Otomatik bilgi çekme (Kariyer.net, Youthall, Anbean) | ✅ Sprint 1 |
-| Manuel başvuru ekleme | ✅ Sprint 1 |
-| Görsel takip tahtası (sürükle-bırak) | ✅ Sprint 1 |
-| Başvuru arşivi (arama + filtre) | ✅ Sprint 1 |
-| Başvuru detayı ve notlar | 🔄 Sprint 2 |
-| Özelleştirilebilir aşamalar | 🔄 Sprint 2 |
-| Gösterge paneli | 🔄 Sprint 2 |
-| Elenme analizi | 🔄 Sprint 3 |
-| Gizlilik öncelikli bildirimler | 🔄 Sprint 3 |
-| Tekrarlayan başvuru uyarısı | 🔄 Sprint 3 |
+Hedef kullanıcı: 22-27 yaş, aktif iş arayan yeni mezunlar ve çalışırken kariyer değişikliği arayan profesyoneller.
 
 ---
 
-## Teknoloji Stack
+## Tasarım Dili
+
+Applyze "ayna" felsefesiyle tasarlandı: kullanıcının verisini gösterir, kararı dayatmaz. İki "yüz" üzerine kuruldu:
+
+### Yüz A — Çalışma yüzeyleri
+
+Liste, detay, ayarlar gibi günlük ekranlar. Krem zemin (`#FAF8F4`), adaçayı yeşili aksanı (`#3D5A47`), Inter sans-serif. Linear ve Things 3 ilhamlı; veri yoğun ama dingin.
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/05-dashboard-hero.jpg" width="220" /><br/><sub>Özet</sub></td>
+<td align="center"><img src="docs/screenshots/08-list.jpg" width="220" /><br/><sub>Liste</sub></td>
+<td align="center"><img src="docs/screenshots/09-detail-trendyol.jpg" width="220" /><br/><sub>Detay</sub></td>
+</tr>
+</table>
+
+### Yüz B — Anlamlı an
+
+Onboarding ve milestone gibi atmosferik ekranlar. Koyu zemin (`#1A2622`), italic editorial başlık (Inter Light Italic), pusula sembolü, vignette glow. Linear "Flows", Tiimo, Alan'dan ilham alındı.
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/03-onboarding-pusula.jpg" width="220" /><br/><sub>Onboarding</sub></td>
+<td align="center"><img src="docs/screenshots/13-milestone.jpg" width="220" /><br/><sub>Bir An</sub></td>
+<td align="center"><img src="docs/screenshots/14-profile-hero.jpg" width="220" /><br/><sub>Profil</sub></td>
+</tr>
+</table>
+
+### Görsel kimlik
+
+Sembol: **pusula iğnesi** — sessiz bir araç. Kullanıcı reddedildiğinde "üzgün maskot" görmez; pusula sadece yön değiştirir. Tipografi tek aile: Inter Variable. Renk paleti: krem nötrler + adaçayı yeşili + her duruma "bilinçli olarak donuk" rozetler (özellikle red için soluk gül — psikolojik bakım).
+
+---
+
+## User Flow
+
+İki ana akış: yeni kullanıcı yolculuğu (tek seferlik) ve günlük kullanım döngüsü.
+
+![User Flow](docs/design/applyze_user_flow_v2.svg)
+
+---
+
+## Wireframe
+
+Her kritik ekran component-component dökümante edildi. Her hotspot'un design system'deki karşılığı (token, ölçü, davranış) yanda etiketli.
+
+![Wireframe](docs/design/applyze_wireframes_annotated.svg)
+
+---
+
+## Ekran Turu
+
+### Açılış ve onboarding
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/01-splash.jpg" width="200" /><br/><sub>Splash</sub></td>
+<td align="center"><img src="docs/screenshots/02-login.jpg" width="200" /><br/><sub>Giriş</sub></td>
+<td align="center"><img src="docs/screenshots/03-onboarding-pusula.jpg" width="200" /><br/><sub>Onboarding 1</sub></td>
+<td align="center"><img src="docs/screenshots/04-onboarding-bildirim.jpg" width="200" /><br/><sub>Onboarding 3</sub></td>
+</tr>
+</table>
+
+### Özet (Dashboard)
+
+Pulse band ile günün özeti, üç metrik, yolun haritası, geri dönüş bekleyenler ve "Pusulan şunları söylüyor" akıllı öneri kartı (backend bağlandığında aktive olacak).
+
+<table>
+<tr>
+<td><img src="docs/screenshots/05-dashboard-hero.jpg" width="220" /></td>
+<td><img src="docs/screenshots/06-dashboard-pattern.jpg" width="220" /></td>
+<td><img src="docs/screenshots/07-dashboard-suggestions.jpg" width="220" /></td>
+</tr>
+</table>
+
+### Liste ve detay
+
+Başvuruları platforma, aşamaya, favorilere göre filtrele. Detay ekranında süreç timeline'ı, notlar ve ilan kaynağı.
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/08-list.jpg" width="200" /><br/><sub>Liste</sub></td>
+<td align="center"><img src="docs/screenshots/09-detail-trendyol.jpg" width="200" /><br/><sub>Detay (LinkedIn)</sub></td>
+<td align="center"><img src="docs/screenshots/10-detail-anbean.jpg" width="200" /><br/><sub>Detay (Anbean)</sub></td>
+</tr>
+</table>
+
+### Etkileşimler
+
+<table>
+<tr>
+<td align="center"><img src="docs/screenshots/11-note-add.jpg" width="200" /><br/><sub>Not ekle</sub></td>
+<td align="center"><img src="docs/screenshots/12-application-actions.jpg" width="200" /><br/><sub>Düzenle / Sil</sub></td>
+<td align="center"><img src="docs/screenshots/13-milestone.jpg" width="200" /><br/><sub>Bir An (mülakat)</sub></td>
+</tr>
+</table>
+
+### Profil ve ayarlar
+
+<table>
+<tr>
+<td><img src="docs/screenshots/14-profile-hero.jpg" width="220" /></td>
+<td><img src="docs/screenshots/15-profile-settings.jpg" width="220" /></td>
+</tr>
+</table>
+
+---
+
+## Teknoloji
 
 | Katman | Teknoloji |
 |--------|-----------|
-| Mobil | Expo (React Native) — iOS & Android |
-| Backend & Auth | Supabase (PostgreSQL + RLS) |
-| Otomatik bilgi çekme | Supabase Edge Functions (Deno) |
-| Durum yönetimi | Zustand |
-| Gezinme | Expo Router |
-| Bildirimler | Expo Notifications + Supabase cron |
-| Analitik | Amplitude |
-| Dağıtım | Expo EAS Build |
+| Mobil framework | Expo (React Native) — iOS & Android |
+| Stiller | NativeWind (Tailwind for React Native) |
+| Tipler | TypeScript (strict mode) |
+| Gezinme | Expo Router (file-based navigation) |
+| Tasarım sistemi | Inter Variable Font + design system v3 token'ları |
+| SVG ve pusula sembolü | react-native-svg |
+| Backend *(planlanan)* | Supabase (PostgreSQL + RLS + Edge Functions) |
+| Bildirimler *(planlanan)* | Expo Notifications + Supabase Cron |
+| Analitik *(planlanan)* | Amplitude |
+| Dağıtım *(planlanan)* | Expo EAS Build → App Store + Google Play |
 
 ---
 
-## Kurulum
+## Çalıştırma
 
-### Gereksinimler
-
-- Node.js 18+
-- Expo CLI
-- Supabase hesabı
-- Apple Developer hesabı (iOS dağıtımı için)
-
-### Adımlar
+**Gereksinimler:** Node.js 18+, npm, [Expo Go](https://expo.dev/client) uygulaması (iOS veya Android telefonda).
 
 ```bash
-# Repoyu klonla
-git clone https://github.com/kullaniciadi/applyze.git
-cd applyze
-
-# Bağımlılıkları yükle
+git clone https://github.com/basakilgu/Applyze.git
+cd Applyze/frontend
 npm install
-
-# Ortam değişkenlerini ayarla
-cp .env.example .env
-# .env dosyasını Supabase bilgilerinle doldur
-
-# Uygulamayı başlat
 npx expo start
 ```
 
-### Ortam Değişkenleri
-
-```
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-### Veritabanı Kurulumu
-
-Supabase projende aşağıdaki tabloları oluştur:
-
-```sql
--- Kullanıcılar (Supabase Auth tarafından yönetilir)
-
--- Başvurular
-CREATE TABLE applications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  company_name TEXT NOT NULL,
-  position TEXT NOT NULL,
-  platform TEXT,
-  source_url TEXT,
-  current_stage_id UUID,
-  applied_at TIMESTAMP DEFAULT now(),
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now(),
-  deleted_at TIMESTAMP
-);
-
--- Aşamalar
-CREATE TABLE stages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  color TEXT,
-  "order" INT,
-  is_terminal BOOLEAN DEFAULT false,
-  is_default BOOLEAN DEFAULT false
-);
-
--- Aşama geçmişi
-CREATE TABLE stage_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  application_id UUID REFERENCES applications(id) ON DELETE CASCADE,
-  stage_id UUID REFERENCES stages(id),
-  changed_at TIMESTAMP DEFAULT now()
-);
-
--- Notlar
-CREATE TABLE notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  application_id UUID REFERENCES applications(id) ON DELETE CASCADE,
-  content TEXT CHECK (char_length(content) <= 2000),
-  created_at TIMESTAMP DEFAULT now()
-);
-
--- Satır bazlı erişim kontrolü
-ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Kullanicilar yalnizca kendi basvurularina erisebilir"
-  ON applications FOR ALL USING (auth.uid() = user_id);
-
--- Diğer tablolara aynı politikayı uygula
-ALTER TABLE stages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Kullanicilar yalnizca kendi asamalarına erisebilir"
-  ON stages FOR ALL USING (auth.uid() = user_id);
-
-ALTER TABLE stage_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
-```
+Terminalde QR kod çıkar. Telefondaki Expo Go uygulamasıyla okuttuğunuzda uygulama açılır. Mock veriyle çalışır — backend bağlantısı veya `.env` ayarı gerekmez.
 
 ---
 
 ## Proje Yapısı
 
 ```
-applyze/
-├── app/                    # Expo Router ekranları
-│   ├── (auth)/             # Giriş ve kayıt ekranları
-│   ├── (tabs)/             # Ana sekme ekranları
-│   │   ├── dashboard.tsx   # Gösterge paneli
-│   │   ├── kanban.tsx      # Görsel takip tahtası
-│   │   ├── archive.tsx     # Arşiv
-│   │   ├── analysis.tsx    # Elenme analizi
-│   │   └── settings.tsx    # Ayarlar
-│   └── application/        # Başvuru detay ekranı
-├── components/             # Yeniden kullanılabilir bileşenler
-├── store/                  # Zustand durum yönetimi
-├── lib/                    # Supabase client ve yardımcılar
-├── supabase/
-│   └── functions/          # Edge Functions (otomatik bilgi çekme)
-└── assets/                 # Görseller ve fontlar
+Applyze/
+├── docs/
+│   ├── design/                    # User flow + wireframe SVG'leri
+│   └── screenshots/               # Uygulama ekran görüntüleri
+├── frontend/                      # Expo (React Native) uygulaması
+│   ├── app/
+│   │   ├── (auth)/                # Giriş ekranı
+│   │   ├── (onboarding)/          # 3 ekranlı onboarding (Yüz B)
+│   │   ├── (tabs)/
+│   │   │   ├── index.tsx          # Liste
+│   │   │   ├── dashboard.tsx      # Özet
+│   │   │   └── profile.tsx        # Profil
+│   │   ├── application/           # Detay, yeni başvuru, düzenle
+│   │   ├── settings/              # Bildirim ve aşama ayarları
+│   │   └── milestone.tsx          # Bir An (Yüz B)
+│   ├── components/ui/             # Card, Badge, Button, CompassMark, BottomSheet, ...
+│   ├── lib/
+│   │   └── mockData.ts            # Şu an demo verisi
+│   ├── types/                     # TypeScript tipleri
+│   └── tailwind.config.js         # Design system token'ları
+├── backend/                       # Supabase yapılandırması (planlanan)
+├── MVP_KAPSAM.md                  # MVP kapsam dokümanı
+├── PRD.md                         # Ürün gereksinimleri dokümanı
+└── plan.md                        # Geliştirme planı (10 hafta)
 ```
+
+---
+
+## Yol Haritası
+
+| Sprint | Odak | Durum |
+|--------|------|-------|
+| Sprint 0 — Tasarım | Yüz A/B sistemi, pusula sembolü, tüm ekran tasarımları | ✅ Tamamlandı |
+| Sprint 1 — Mock demo | Frontend'in mock veriyle çalışır hâle gelmesi | ✅ Tamamlandı *(bu repo)* |
+| Sprint 2 — Backend | Supabase, RLS, kimlik doğrulama, başvuru CRUD | 🔄 Sonraki |
+| Sprint 3 — Otomatik veri çekme | Kariyer.net / Youthall / Anbean parser | 🕐 Planlanan |
+| Sprint 4 — Bildirim ve analiz | Push bildirim (gizlilik öncelikli), elenme analizi | 🕐 Planlanan |
+| Sprint 5 — Yayına alma | App Store + Google Play | 🕐 Planlanan |
+
+Detaylar için [`plan.md`](plan.md), [`MVP_KAPSAM.md`](MVP_KAPSAM.md) ve [`PRD.md`](PRD.md).
+
+---
+
+## Belgeler
+
+- [`MVP_KAPSAM.md`](MVP_KAPSAM.md) — Ürün vizyonu, pazar analizi, MVP kapsamı, persona ve metrikler
+- [`PRD.md`](PRD.md) — Ürün gereksinimleri, fonksiyonel ve fonksiyonel olmayan gereksinimler, veri modeli
+- [`plan.md`](plan.md) — 10 haftalık geliştirme planı, sprint sprint görev listesi
 
 ---
 
 ## Katkı
 
-Bu proje şu an tek geliştirici tarafından yürütülmektedir. Hata bildirimleri için Issues kullanabilirsin.
+Bu proje şu an tek geliştirici tarafından yürütülmektedir. Hata bildirimleri ve öneriler için [Issues](https://github.com/basakilgu/Applyze/issues) bölümünü kullanabilirsiniz.
 
 ### Dal Stratejisi
 
 ```
-main        → kararlı, yayına alınmış kod
+main        → kararlı, yayına hazır kod
 develop     → aktif geliştirme
 feature/*   → yeni özellikler
 ```
-
----
-
-## Durum
-
-🚧 **Aktif Geliştirme** — Sprint 1 devam ediyor.
-
-Hedef yayın tarihi: Sprint 4 tamamlanması (10 hafta).
 
 ---
 
@@ -199,4 +260,8 @@ MIT
 
 ---
 
-*Applyze — v1.0 geliştirme aşamasında*
+<div align="center">
+
+*Applyze — Kariyer pusulası. v1.0 — Tasarım demosu.*
+
+</div>
