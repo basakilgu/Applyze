@@ -1,6 +1,6 @@
 // app/application/new.tsx — New Application Form
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +11,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { mockStore, mockStages, platformLabels, platformColors, stageDisplayNames } from "../../lib/applications";
 import type { Application, Platform, StageKey } from "../../types/database";
+import { confirmAction } from "../../lib/dialogs";
 
 const platforms: Platform[] = ["linkedin", "kariyer", "youthall", "anbean", "other"];
 
@@ -66,16 +67,16 @@ export default function NewApplicationScreen() {
     router.back();
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (position || companyName || initialNote) {
-      Alert.alert(
-        "Çıkmak istediğine emin misin?",
-        "Yazdıkların kaydedilmeyecek.",
-        [
-          { text: "Devam et", style: "cancel" },
-          { text: "Çık", style: "destructive", onPress: () => router.back() },
-        ]
-      );
+      const ok = await confirmAction({
+        title: "Çıkmak istediğine emin misin?",
+        message: "Yazdıkların kaydedilmeyecek.",
+        confirmText: "Çık",
+        cancelText: "Devam et",
+        destructive: true,
+      });
+      if (ok) router.back();
     } else {
       router.back();
     }

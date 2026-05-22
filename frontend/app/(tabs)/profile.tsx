@@ -10,6 +10,7 @@ import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg"
 
 import { useApplications } from "../../lib/applications";
 import { supabase } from "../../lib/supabase";
+import { notify } from "../../lib/dialogs";
 
 // =============================================================
 // THEME
@@ -651,16 +652,13 @@ const handleSignOut = async () => {
               <SettingRow
                 label="Profil bilgilerim"
                 onPress={() =>
-                  Alert.alert("Yakında", "Bu özellik üzerinde çalışıyoruz.")
+                  notify("Yakında", "Bu özellik üzerinde çalışıyoruz.")
                 }
               />
               <SettingRow
                 label="Verilerimi indir"
                 onPress={() =>
-                  Alert.alert(
-                    "Verilerini indir",
-                    "Tüm başvurularını CSV olarak e-posta adresine göndereceğiz."
-                  )
+                  notify("Verilerini indir", "Tüm başvurularını CSV olarak e-posta adresine göndereceğiz.")
                 }
                 isLast
               />
@@ -673,25 +671,19 @@ const handleSignOut = async () => {
               <SettingRow
                 label="Gizlilik Politikası"
                 onPress={() =>
-                  Alert.alert(
-                    "Gizlilik",
-                    "Verilerin bu cihazdan ayrılmadan, şifreli olarak saklanır."
-                  )
+                  notify("Gizlilik", "Verilerin bu cihazdan ayrılmadan, şifreli olarak saklanır.")
                 }
               />
               <SettingRow
                 label="Kullanım Koşulları"
                 onPress={() =>
-                  Alert.alert("Koşullar", "Bu özellik geliştirme aşamasında.")
+                  notify("Koşullar", "Bu özellik geliştirme aşamasında.")
                 }
               />
               <SettingRow
                 label="Geri bildirim gönder"
                 onPress={() =>
-                  Alert.alert(
-                    "Geri bildirim",
-                    "feedback@applyze.com adresine yazabilirsin."
-                  )
+                  notify("Geri bildirim", "feedback@applyze.com adresine yazabilirsin.")
                 }
               />
               <SettingRow label="Sürüm" value="1.0.0" isLast />
