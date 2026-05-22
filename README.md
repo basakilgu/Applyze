@@ -24,7 +24,7 @@ Backend (Supabase: şema, RLS, Auth, Edge Functions, cron) ayakta ve frontend'e 
 | Katman | Durum |
 |--------|-------|
 | Tasarım sistemi (Yüz A / Yüz B + pusula sembolü) | ✅ Tamamlandı |
-| Onboarding (3 ekran), Liste, Özet, Profil ekranları | ✅ Tamamlandı (mock veriyle) |
+| Onboarding (3 ekran), Liste, Özet, Profil ekranları | ✅ Tamamlandı (Supabase'e bağlı) |
 | Detay, başvuru ekleme, düzenleme, not ekleme akışı | ✅ Frontend hazır |
 | Aşama yönetimi ve ayarlar ekranları | ✅ Frontend hazır |
 | Milestone (Bir An) ekranı | ✅ Tamamlandı |
@@ -179,10 +179,11 @@ Başvuruları platforma, aşamaya, favorilere göre filtrele. Detay ekranında s
 git clone https://github.com/basakilgu/Applyze.git
 cd Applyze/frontend
 npm install
+cp .env.example .env   # Supabase proje URL'i ve anon anahtarını doldur
 npx expo start
 ```
 
-Terminalde QR kod çıkar. Telefondaki Expo Go uygulamasıyla okuttuğunuzda uygulama açılır. Mock veriyle çalışır — backend bağlantısı veya `.env` ayarı gerekmez.
+Terminalde QR kod çıkar. Telefondaki Expo Go uygulamasıyla okuttuğunuzda uygulama açılır. Uygulama Supabase'e bağlıdır; `.env` içine Supabase proje URL'i ve anon anahtarı girilmeden açılış başarısız olur (`.env.example`'ı kopyalayıp doldurun).
 
 ---
 
@@ -206,10 +207,11 @@ Applyze/
 │   │   └── milestone.tsx          # Bir An (Yüz B)
 │   ├── components/ui/             # Card, Badge, Button, CompassMark, BottomSheet, ...
 │   ├── lib/
-│   │   └── mockData.ts            # Şu an demo verisi
+│   │   ├── supabase.ts            # Supabase client (.env'den okur)
+│   │   └── applications.ts        # Veri katmanı (Supabase'e bağlı)
 │   ├── types/                     # TypeScript tipleri
 │   └── tailwind.config.js         # Design system token'ları
-├── backend/                       # Supabase yapılandırması (planlanan)
+├── backend/                       # Supabase yapılandırması (şema, RLS, Edge Functions)
 ├── MVP_KAPSAM.md                  # MVP kapsam dokümanı
 ├── PRD.md                         # Ürün gereksinimleri dokümanı
 └── plan.md                        # Geliştirme planı (10 hafta)
@@ -222,7 +224,7 @@ Applyze/
 | Sprint | Odak | Durum |
 |--------|------|-------|
 | Sprint 0 — Tasarım | Yüz A/B sistemi, pusula sembolü, tüm ekran tasarımları | ✅ Tamamlandı |
-| Sprint 1 — Mock demo | Frontend'in mock veriyle çalışır hâle gelmesi | ✅ Tamamlandı *(bu repo)* |
+| Sprint 1 — Backend bağlantısı | Frontend'in Supabase'e bağlanması (auth, CRUD, demo veri) | ✅ Tamamlandı *(bu repo)* |
 | Sprint 2 — Backend | Supabase, RLS, kimlik doğrulama, başvuru CRUD | 🔄 Sonraki |
 | Sprint 4 — Bildirim ve analiz | Push bildirim (gizlilik öncelikli), elenme analizi | 🕐 Planlanan |
 | Sprint 5 — Yayına alma | App Store + Google Play | 🕐 Planlanan |
