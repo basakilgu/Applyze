@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import { CompassMark } from "../../components/ui/CompassMark";
+import { setHasSeenOnboarding } from "../../lib/onboarding";
 
 function ProgressDots({ active }: { active: 0 | 1 | 2 }) {
   return (
@@ -28,6 +29,10 @@ function ProgressDots({ active }: { active: 0 | 1 | 2 }) {
 
 export default function Onboarding1() {
   const router = useRouter();
+  const finishOnboarding = async () => {
+    await setHasSeenOnboarding();
+    router.replace("/(tabs)");
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#243530" }}>
@@ -36,7 +41,7 @@ export default function Onboarding1() {
         {/* Header */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 8 }}>
           <ProgressDots active={0} />
-          <Pressable onPress={() => router.replace("/(tabs)")} hitSlop={12}>
+          <Pressable onPress={finishOnboarding} hitSlop={12}>
             <Text style={{ fontSize: 14, color: "#B8B0A4", fontFamily: "Inter_500Medium" }}>
               Atla
             </Text>

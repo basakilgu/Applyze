@@ -2,14 +2,16 @@
 import React, { useEffect } from "react";
 import { Stack, useRouter } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import { getHasSeenOnboarding } from "../../lib/onboarding";
 
 export default function AuthLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
-        router.replace("/(tabs)");
+        const seen = await getHasSeenOnboarding();
+        router.replace(seen ? "/(tabs)" : "/(onboarding)");
       }
     });
 
