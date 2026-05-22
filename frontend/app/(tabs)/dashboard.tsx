@@ -110,7 +110,7 @@ function computeCounts(apps: any[]) {
   return {
     all: apps.length,
     active: apps.filter((a) => a.current_stage !== "rejected" && a.current_stage !== "offer").length,
-    interview: apps.filter((a) => a.current_stage === "interview").length,
+    interview: apps.filter((a) => a.current_stage === "interview" || a.current_stage === "manager").length,
     offer: apps.filter((a) => a.current_stage === "offer").length,
     rejected: apps.filter((a) => a.current_stage === "rejected").length,
   };
@@ -289,8 +289,9 @@ function SectionLabel({
 
 const STAGE_LABELS: Record<string, string> = {
   applied: "Başvuru",
-  screening: "Screening",
+  screening: "İK",
   interview: "Mülakat",
+  manager: "Yönetici",
   offer: "Teklif",
   rejected: "Elendi",
 };
@@ -299,6 +300,7 @@ const STAGE_PALETTE: Record<string, { bg: string; text: string }> = {
   applied: { bg: "#DEE6EE", text: "#2F4358" },
   screening: { bg: "#E2E8D6", text: "#4A5638" },
   interview: { bg: "#EDE0CE", text: "#5E4828" },
+  manager: { bg: "#EDE0CE", text: "#5E4828" },
   offer: { bg: "#D5E3CC", text: "#2F4A2A" },
   rejected: { bg: "#E8D8D8", text: "#6B4444" },
 };
@@ -758,7 +760,7 @@ export default function DashboardScreen() {
                       letterSpacing: 0.2,
                     }}
                   >
-                    {counts.all} başvuru · {counts.interview + counts.offer} mülakat ·{" "}
+                    {counts.all} başvuru · {counts.interview} mülakat ·{" "}
                     {counts.offer} teklif
                   </Text>
                 </View>

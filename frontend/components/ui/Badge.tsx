@@ -10,7 +10,7 @@ interface Props {
 
 const config: Record<StageKey, { bg: string; text: string; label: string }> = {
   applied:   { bg: "#DEE6EE", text: "#2F4358", label: "Başvuru" },
-  screening: { bg: "#E2E8D6", text: "#4A5638", label: "Screening" },
+  screening: { bg: "#E2E8D6", text: "#4A5638", label: "İK" },
   interview: { bg: "#EDE0CE", text: "#5E4828", label: "Mülakat" },
   manager:   { bg: "#EDE0CE", text: "#5E4828", label: "Yönetici" },
   offer:     { bg: "#C9D8C0", text: "#2F4A2A", label: "Teklif" },
