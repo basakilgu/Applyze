@@ -1,6 +1,6 @@
 // app/application/[id].tsx — Application Detail
 import React, { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -18,6 +18,7 @@ import {
   platformColors, platformLabels, stageDisplayNames, getStageOrder,
 } from "../../lib/applications";
 import type { StageKey } from "../../types/database";
+import { confirmAction } from "../../lib/dialogs";
 
 function MoreIcon({ color = "#1F1B16" }: { color?: string }) {
   return (
@@ -147,6 +148,7 @@ export default function ApplicationDetailScreen() {
 
   const [stageSheetVisible, setStageSheetVisible] = useState(false);
   const [noteSheetVisible, setNoteSheetVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (!app) {
     return (
@@ -183,34 +185,25 @@ export default function ApplicationDetailScreen() {
     mockStore.toggleFavorite(app.id);
   };
 
-  const handleMore = () => {
-    Alert.alert(
-      app.position,
-      app.company_name,
-      [
-        { text: "Düzenle", onPress: () => router.push(`/application/edit/${app.id}`) },
-        {
-          text: "Sil",
-          style: "destructive",
-          onPress: () => Alert.alert(
-            "Bu başvuruyu sil",
-            "Geri alınamaz. Başvuru ve tüm geçmişi silinecek.",
-            [
-              { text: "İptal", style: "cancel" },
-              {
-                text: "Sil",
-                style: "destructive",
-                onPress: () => {
-                  mockStore.softDelete(app.id);
-                  router.back();
-                },
-              },
-            ]
-          ),
-        },
-        { text: "İptal", style: "cancel" },
-      ]
-    );
+  const handleMore = () => setMenuOpen(true);
+
+  const handleEdit = () => {
+    setMenuOpen(false);
+    router.push(`/application/edit/${app.id}`);
+  };
+
+  const handleDelete = async () => {
+    setMenuOpen(false);
+    const ok = await confirmAction({
+      title: "Bu başvuruyu sil",
+      message: "Geri alınamaz. Başvuru ve tüm geçmişi silinecek.",
+      confirmText: "Sil",
+      destructive: true,
+    });
+    if (ok) {
+      await mockStore.softDelete(app.id);
+      router.back();
+    }
   };
 
   return (
@@ -408,6 +401,54 @@ export default function ApplicationDetailScreen() {
         onClose={() => setNoteSheetVisible(false)}
         onSave={handleAddNote}
       />
+
+      {menuOpen && (
+        <Pressable
+          onPress={() => setMenuOpen(false)}
+          style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(26,38,34,0.18)",
+          }}
+        >
+          <View
+            style={{
+              position: "absolute",
+              top: 60, right: 16,
+              minWidth: 180,
+              backgroundColor: "#FFFFFF",
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: "#EBE7DF",
+              paddingVertical: 6,
+            }}
+          >
+            <Pressable
+              onPress={handleEdit}
+              style={({ pressed }) => ({
+                paddingVertical: 12, paddingHorizontal: 18,
+                opacity: pressed ? 0.5 : 1,
+              })}
+            >
+              <Text style={{ fontSize: 15, color: "#1F1B16", fontFamily: "Inter_500Medium" }}>
+                Düzenle
+              </Text>
+            </Pressable>
+            <View style={{ height: 1, backgroundColor: "#EBE7DF", marginHorizontal: 12 }} />
+            <Pressable
+              onPress={handleDelete}
+              style={({ pressed }) => ({
+                paddingVertical: 12, paddingHorizontal: 18,
+                opacity: pressed ? 0.5 : 1,
+              })}
+            >
+              <Text style={{ fontSize: 15, color: "#DC2626", fontFamily: "Inter_500Medium" }}>
+                Sil
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      )}
     </View>
   );
 }
