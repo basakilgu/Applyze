@@ -44,6 +44,21 @@ export const platformColors: Record<Platform, string> = {
   other: "#8A8278",
 };
 
+// URL normalize — check-duplicate Edge Function ile birebir aynı mantık.
+// Aynı ilan farklı linklerle (utm/ref parametreleri, sondaki /) gelse de
+// aynı kabul edilsin. Geçersiz URL'de ham hali küçük harfli döner.
+export function normalizeUrl(raw: string): string {
+  try {
+    const url = new URL(raw.trim());
+    url.search = "";
+    let normalized = url.toString();
+    if (normalized.endsWith("/")) normalized = normalized.slice(0, -1);
+    return normalized.toLowerCase();
+  } catch {
+    return raw.trim().toLowerCase();
+  }
+}
+
 // ============================================================================
 // SUPABASE → MOCK SHAPE DÖNÜŞTÜRÜCÜLER
 // ============================================================================
@@ -241,6 +256,18 @@ export const applicationsStore = {
     return _cache.find((a) => a.id === id && !a.deleted_at);
   },
 
+  // Verilen URL'ye sahip (silinmemiş) bir başvuru var mı? İki tarafı da
+  // normalize ederek eşleştirir; eski/normalize edilmemiş kayıtları da yakalar.
+  findByUrl(rawUrl: string): Application | null {
+    const target = normalizeUrl(rawUrl);
+    if (!target) return null;
+    return (
+      _cache.find(
+        (a) => !a.deleted_at && !!a.source_url && normalizeUrl(a.source_url) === target,
+      ) ?? null
+    );
+  },
+
   async refresh() {
     await loadFromSupabase();
   },
@@ -271,7 +298,7 @@ export const applicationsStore = {
         position: input.position,
         location: input.location ?? null,
         platform: input.platform,
-        source_url: input.source_url ?? null,
+        source_url: input.source_url ? normalizeUrl(input.source_url) : null,
         current_stage_id: stageId ?? null,
       })
       .select()
