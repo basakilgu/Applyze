@@ -7,19 +7,27 @@
     "scheme": "applyze",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A2622"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.applyze.app"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1A2622"
       },
       "package": "com.applyze.app"
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
