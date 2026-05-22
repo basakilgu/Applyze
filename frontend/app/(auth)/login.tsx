@@ -46,7 +46,7 @@ function mapAuthError(raw: string): string {
   if (m.includes("already registered") || m.includes("already been registered") || m.includes("user already"))
     return "Bu e-posta zaten kayıtlı. Giriş yapmayı dene.";
   if (m.includes("password should be at least")) return "Şifre en az 6 karakter olmalı.";
-  if (m.includes("unable to validate email") || m.includes("invalid email") || m.includes("invalid format"))
+  if (m.includes("invalid format") || (m.includes("email") && m.includes("invalid")))
     return "Geçerli bir e-posta adresi gir.";
   if (m.includes("email not confirmed")) return "E-postan henüz doğrulanmamış. Gelen kutunu kontrol et.";
   if (m.includes("for security purposes") || m.includes("rate limit") || m.includes("too many"))
