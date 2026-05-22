@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { CompassMark } from "../components/ui/CompassMark";
 import { supabase } from "../lib/supabase";
+import { getHasSeenOnboarding } from "../lib/onboarding";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function SplashScreen() {
 
     (async () => {
       const { data } = await supabase.auth.getSession();
+      const seenOnboarding = data.session ? await getHasSeenOnboarding() : false;
       if (!mounted) return;
 
       const elapsed = Date.now() - startedAt;
@@ -24,7 +26,7 @@ export default function SplashScreen() {
       setTimeout(() => {
         if (!mounted) return;
         if (data.session) {
-          router.replace("/(tabs)");
+          router.replace(seenOnboarding ? "/(tabs)" : "/(onboarding)");
         } else {
           router.replace("/(auth)/login");
         }

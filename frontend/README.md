@@ -13,11 +13,11 @@ npx expo start --clear
 
 ## Stack
 
-- **Expo SDK 52** + **Expo Router v4** (file-based routing)
-- **React Native 0.76** (New Architecture)
+- **Expo SDK 54** + **Expo Router v6** (file-based routing)
+- **React Native 0.81** (New Architecture)
 - **NativeWind v4** (Tailwind for React Native)
 - **TypeScript** (strict)
-- **Inter Variable** + **Menlo** (typography)
+- **Inter Variable** + **Menlo** (typography; Menlo iOS'a özgü, Android sistem monospace'ine düşer)
 - **react-native-svg** (compass + icons)
 
 ## Ekranlar (toplam 17)
@@ -25,7 +25,7 @@ npx expo start --clear
 ```
 app/
 ├── index.tsx                      # Splash (1.8s)
-├── (auth)/login.tsx               # Apple + Email login
+├── (auth)/login.tsx               # Email login (kayıt + giriş + şifre sıfırlama)
 ├── (onboarding)/
 │   ├── index.tsx                  # 1: "Sadece bir takipçi değil. Bir pusula."
 │   ├── two.tsx                    # 2: "Hangi aşamada elendiğini gör."
@@ -59,10 +59,12 @@ app/
 - **Sessiz bildirimler:** kilit ekranında şirket adı görünmez
 - **Streak yok:** sürekli kullanım dayatılmaz, kariyer huzursuzluğu körüklenmez
 
-## Mock data
+## Veri katmanı
 
-`lib/mockData.ts` — 9 örnek başvuru, in-memory store, subscribe pattern.
-Backend'e geçildiğinde Supabase API'sıyla aynı arayüze sahip kalır.
+Uygulama Supabase'e bağlıdır. `lib/supabase.ts` client'ı `.env` içindeki
+`EXPO_PUBLIC_SUPABASE_URL` ve `EXPO_PUBLIC_SUPABASE_ANON_KEY` değerlerinden kurar;
+`lib/applications.ts` ise başvuru/aşama/not verisini Supabase üzerinden okuyup yazar.
+Çalıştırmadan önce `.env.example`'ı kopyalayıp doldurun (`cp .env.example .env`).
 
 ## Lisans
 

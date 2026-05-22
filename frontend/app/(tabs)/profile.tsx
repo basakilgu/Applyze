@@ -76,7 +76,7 @@ function formatDateLongTr(iso: string): string {
 function computeCounts(apps: any[]) {
   return {
     all: apps.length,
-    interview: apps.filter((a) => a.current_stage === "interview").length,
+    interview: apps.filter((a) => a.current_stage === "interview" || a.current_stage === "manager").length,
     offer: apps.filter((a) => a.current_stage === "offer").length,
   };
 }
@@ -613,7 +613,7 @@ const handleSignOut = async () => {
               <StatColumn value={counts.all} label="Başvuru" />
               <View style={{ width: 0.5, backgroundColor: colors.cream300 }} />
               <StatColumn
-                value={counts.interview + counts.offer}
+                value={counts.interview}
                 label="Mülakat"
               />
               <View style={{ width: 0.5, backgroundColor: colors.cream300 }} />
