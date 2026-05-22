@@ -1,6 +1,6 @@
 // app/application/edit/[id].tsx — Edit Application
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +11,7 @@ import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { SectionHeader } from "../../../components/ui/SectionHeader";
 import { mockStore, useApplication, platformLabels, platformColors } from "../../../lib/applications";
+import { confirmAction, notify } from "../../../lib/dialogs";
 import type { Platform } from "../../../types/database";
 
 const platforms: Platform[] = ["linkedin", "kariyer", "youthall", "anbean", "other"];
@@ -40,7 +41,7 @@ export default function EditApplicationScreen() {
 
   const handleSave = () => {
     if (!position.trim() || !companyName.trim()) {
-      Alert.alert("Eksik bilgi", "Pozisyon ve şirket alanları zorunlu.");
+      notify("Eksik bilgi", "Pozisyon ve şirket alanları zorunlu.");
       return;
     }
     mockStore.update(app.id, {
@@ -53,23 +54,18 @@ export default function EditApplicationScreen() {
     router.back();
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Başvuruyu sil",
-      "Bu işlem geri alınamaz. Başvuru ve tüm geçmişi silinecek.",
-      [
-        { text: "İptal", style: "cancel" },
-        {
-          text: "Sil",
-          style: "destructive",
-          onPress: () => {
-            mockStore.softDelete(app.id);
-            router.dismissAll?.();
-            router.replace("/(tabs)");
-          },
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    const ok = await confirmAction({
+      title: "Başvuruyu sil",
+      message: "Bu işlem geri alınamaz. Başvuru ve tüm geçmişi silinecek.",
+      confirmText: "Sil",
+      destructive: true,
+    });
+    if (ok) {
+      await mockStore.softDelete(app.id);
+      router.dismissAll?.();
+      router.replace("/(tabs)");
+    }
   };
 
   return (
