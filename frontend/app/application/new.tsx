@@ -1,5 +1,5 @@
 // app/application/new.tsx — New Application Form
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,7 +10,7 @@ import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { mockStore, mockStages, platformLabels, platformColors, stageDisplayNames } from "../../lib/applications";
-import type { Platform, StageKey } from "../../types/database";
+import type { Application, Platform, StageKey } from "../../types/database";
 
 const platforms: Platform[] = ["linkedin", "kariyer", "youthall", "anbean", "other"];
 
@@ -26,6 +26,22 @@ export default function NewApplicationScreen() {
   const [initialNote, setInitialNote] = useState("");
 
   const [errors, setErrors] = useState<{ position?: string; companyName?: string }>({});
+
+  // Tekrar uyarısı: URL alanı değiştikçe (debounce ile) aynı ilana
+  // daha önce başvurulmuş mu kontrol et. Engellemez, sadece uyarır (FR-10).
+  const [duplicateApp, setDuplicateApp] = useState<Application | null>(null);
+
+  useEffect(() => {
+    const url = sourceUrl.trim();
+    if (!url) {
+      setDuplicateApp(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDuplicateApp(mockStore.findByUrl(url));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [sourceUrl]);
 
   const handleSave = () => {
     const newErrors: typeof errors = {};
@@ -169,6 +185,30 @@ export default function NewApplicationScreen() {
           keyboardType="url"
           helper="İsteğe bağlı — daha sonra ilana hızlı erişim için"
         />
+
+        {duplicateApp && (
+          <Pressable
+            onPress={() => router.push(`/application/${duplicateApp.id}`)}
+            style={{
+              marginBottom: 16,
+              padding: 14,
+              borderRadius: 12,
+              backgroundColor: "#FBF3E3",
+              borderWidth: 1,
+              borderColor: "#E8D9B5",
+            }}
+          >
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8A5A00", marginBottom: 4 }}>
+              Bu ilana zaten başvurmuşsun
+            </Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "#5C5650" }}>
+              {duplicateApp.company_name} — {duplicateApp.position}
+            </Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#3D5A47", marginTop: 8 }}>
+              Mevcut başvuruya git →
+            </Text>
+          </Pressable>
+        )}
 
         {/* Aşama selector */}
         <View style={{ marginBottom: 16 }}>
