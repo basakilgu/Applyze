@@ -1,7 +1,7 @@
 // app/(tabs)/dashboard.tsx — Özet ekranı
 // Sadece useApplications'ı dışarıdan alıyor. Tüm helper'lar ve UI bileşenleri içeride.
 
-import React, { useMemo, useId } from "react";
+import React, { useMemo, useId, useState, useEffect } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 import { useApplications } from "../../lib/applications";
+import { fetchAiSuggestions, type AiResult } from "../../lib/aiSuggestions";
 
 // =============================================================
 // THEME
@@ -555,6 +556,36 @@ export default function DashboardScreen() {
 
   const counts = useMemo(() => computeCounts(apps), [apps]);
   const data = useMemo(() => computeDashboardData(apps), [apps]);
+  // ===========================================================
+  // AI ÖNERİLERİ (Gemini — ai-suggestions Edge Function)
+  // ===========================================================
+  const [aiResult, setAiResult] = useState<AiResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    // En az 3 başvuru yoksa AI çağırma (veri çok az, anlamlı yorum çıkmaz)
+    if (counts.all < 3) {
+      setAiResult(null);
+      return;
+    }
+
+    let cancelled = false;
+    setAiLoading(true);
+
+    fetchAiSuggestions(apps)
+      .then((result) => {
+        if (!cancelled) setAiResult(result);
+      })
+      .finally(() => {
+        if (!cancelled) setAiLoading(false);
+      });
+
+    // Component kapanırsa eski isteği iptal et (yarış durumu önlenir)
+    return () => {
+      cancelled = true;
+    };
+    // apps değişince (yeni başvuru, aşama güncellemesi) öneriler yenilenir
+  }, [apps.length]);
 
   const weekStats = useMemo(() => {
     const now = Date.now();
@@ -1092,6 +1123,7 @@ export default function DashboardScreen() {
                   borderRadius: 12,
                   overflow: "hidden",
                   position: "relative",
+                  minHeight: 80,
                 }}
               >
                 <View
@@ -1110,59 +1142,114 @@ export default function DashboardScreen() {
                   />
                 </View>
 
-                {[
-                  "Mülakat aşamasındaki başvurularına yoğunlaş.",
-                  "Geri dönüş süresi uzayan ilanlara nazik bir takip mesajı yaz.",
-                  "Son 30 günde en çok ilerleme kaydettiğin platforma odaklan.",
-                ].map((tip, idx) => (
+                {/* DURUM 1: Yükleniyor */}
+                {aiLoading && (
                   <View
-                    key={idx}
                     style={{
                       paddingHorizontal: 16,
-                      paddingVertical: 14,
-                      flexDirection: "row",
-                      alignItems: "flex-start",
-                      borderBottomWidth: idx === 2 ? 0 : 0.5,
-                      borderColor: "rgba(184, 201, 189, 0.14)",
+                      paddingVertical: 22,
                       zIndex: 1,
                     }}
                   >
-                    <View
+                    <Text
                       style={{
-                        paddingHorizontal: 7,
-                        paddingVertical: 3,
-                        borderRadius: 4,
-                        backgroundColor: "rgba(184, 201, 189, 0.18)",
-                        marginRight: 12,
-                        marginTop: 1,
+                        fontSize: 13,
+                        color: colors.sageMist,
+                        fontFamily: fonts.light,
+                        fontStyle: "italic",
+                        lineHeight: 19,
+                      }}
+                    >
+                      Pusula başvurularını okuyor…
+                    </Text>
+                  </View>
+                )}
+
+                {/* DURUM 2: Başarılı — Gemini önerileri */}
+                {!aiLoading &&
+                  aiResult?.status === "ok" &&
+                  aiResult.suggestions.map((s, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        borderBottomWidth:
+                          idx === aiResult.suggestions.length - 1 ? 0 : 0.5,
+                        borderColor: "rgba(184, 201, 189, 0.14)",
+                        zIndex: 1,
                       }}
                     >
                       <Text
                         style={{
-                          fontSize: 9,
-                          color: colors.sageMist,
-                          fontFamily: fonts.medium,
-                          letterSpacing: 0.6,
-                          textTransform: "uppercase",
+                          fontSize: 13,
+                          color: colors.sagePale,
+                          fontFamily: fonts.semibold,
+                          marginBottom: 4,
+                          lineHeight: 18,
                         }}
                       >
-                        Yakında
+                        {s.baslik}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          color: colors.cream100,
+                          fontFamily: fonts.regular,
+                          lineHeight: 19,
+                        }}
+                      >
+                        {s.metin}
                       </Text>
                     </View>
+                  ))}
+
+                {/* DURUM 3: Boş — öneri üretilemedi */}
+                {!aiLoading && aiResult?.status === "empty" && (
+                  <View
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 22,
+                      zIndex: 1,
+                    }}
+                  >
                     <Text
                       style={{
-                        flex: 1,
                         fontSize: 13,
                         color: colors.cream100,
                         fontFamily: fonts.regular,
                         lineHeight: 19,
                       }}
                     >
-                      {tip}
+                      Henüz net bir örüntü oluşmadı. Başvuruların arttıkça pusula
+                      daha çok şey söyleyecek.
                     </Text>
                   </View>
-                ))}
+                )}
+
+                {/* DURUM 4: Hata */}
+                {!aiLoading && aiResult?.status === "error" && (
+                  <View
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 22,
+                      zIndex: 1,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: colors.cream100,
+                        fontFamily: fonts.regular,
+                        lineHeight: 19,
+                      }}
+                    >
+                      Öneriler şu an alınamadı. Biraz sonra tekrar dene.
+                    </Text>
+                  </View>
+                )}
               </View>
+
               <Text
                 style={{
                   fontSize: 11,
@@ -1174,7 +1261,7 @@ export default function DashboardScreen() {
                   paddingHorizontal: 4,
                 }}
               >
-                Akıllı öneriler için backend ve veri tabanı entegrasyonu sürüyor.
+                Pusula, başvuru verini yorumlar. Şirket adların paylaşılmaz.
               </Text>
             </View>
           )}
