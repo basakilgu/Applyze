@@ -17,7 +17,7 @@ export default function SplashScreen() {
 
     (async () => {
       const { data } = await supabase.auth.getSession();
-      const seenOnboarding = data.session ? await getHasSeenOnboarding() : false;
+      const seenOnboarding = await getHasSeenOnboarding();
       if (!mounted) return;
 
       const elapsed = Date.now() - startedAt;
@@ -25,8 +25,12 @@ export default function SplashScreen() {
 
       setTimeout(() => {
         if (!mounted) return;
-        if (data.session) {
-          router.replace(seenOnboarding ? "/(tabs)" : "/(onboarding)");
+        // Tanitim ekranlari ilk ziyarette herkese ONCE gosterilir.
+        // Onboarding bitince (oturum yoksa) giris ekranina gidilir.
+        if (!seenOnboarding) {
+          router.replace("/(onboarding)");
+        } else if (data.session) {
+          router.replace("/(tabs)");
         } else {
           router.replace("/(auth)/login");
         }
