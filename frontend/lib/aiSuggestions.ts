@@ -300,12 +300,64 @@ function buildSummary(apps: any[]): string {
 // =============================================================
 // Edge Function'ı çağır ve önerileri getir
 // =============================================================
+// --- Önbellek: Gemini'yi her açılışta değil, yalnız veri değişince çağır ---
+// Bu, kullanıcı özet ekranını her açtığında/yenilediğinde gereksiz çağrı
+// yapılmasını (ve ücretsiz kotanın hızla dolmasını) önler.
+let _memCache: { fp: string; result: AiResult } | null = null;
+const AI_CACHE_KEY = "applyze_ai_cache_v1";
+const AI_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 saat
+
+function appsFingerprint(apps: any[]): string {
+  // Başvuru sayısı + en son hareket zamanı: biri değişirse öneriler tazelenir.
+  let latest = 0;
+  for (const a of apps) {
+    const t = new Date(a?.updated_at || a?.applied_at || 0).getTime();
+    if (!Number.isNaN(t) && t > latest) latest = t;
+  }
+  return `${apps.length}:${latest}`;
+}
+
+function readPersistentCache(): { fp: string; result: AiResult; ts: number } | null {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const raw = window.localStorage.getItem(AI_CACHE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
+  } catch { /* yok say */ }
+  return null;
+}
+
+function writePersistentCache(obj: { fp: string; result: AiResult; ts: number }): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(AI_CACHE_KEY, JSON.stringify(obj));
+    }
+  } catch { /* yok say */ }
+}
+
 export async function fetchAiSuggestions(apps: any[]): Promise<AiResult> {
   const summary = buildSummary(apps);
 
   // Veri yoksa hiç çağırma — boş döndür
   if (!summary) {
     return { status: "empty" };
+  }
+
+  const fp = appsFingerprint(apps);
+
+  // 1) Bellek önbelleği: aynı oturumda veri değişmediyse tekrar çağırma.
+  if (_memCache && _memCache.fp === fp && _memCache.result.status === "ok") {
+    return _memCache.result;
+  }
+  // 2) Kalıcı önbellek (web): veri aynı ve taze ise Gemini'yi hiç çağırma.
+  const persisted = readPersistentCache();
+  if (
+    persisted && persisted.fp === fp &&
+    persisted.result.status === "ok" &&
+    Date.now() - persisted.ts < AI_CACHE_TTL
+  ) {
+    _memCache = { fp, result: persisted.result };
+    return persisted.result;
   }
 
   try {
@@ -316,19 +368,30 @@ export async function fetchAiSuggestions(apps: any[]): Promise<AiResult> {
 
     if (error) {
       console.error("ai-suggestions invoke hatası:", error);
+      // Elimizde eski (bayat) bir öneri varsa boş ekran yerine onu göster.
+      if (persisted?.result.status === "ok") return persisted.result;
       return { status: "error", message: "Öneriler şu an alınamadı." };
     }
 
     const suggestions = data?.suggestions;
     const headline = typeof data?.headline === "string" ? data.headline : undefined;
     if (Array.isArray(suggestions) && suggestions.length > 0) {
-      return { status: "ok", suggestions, headline };
+      const result: AiResult = { status: "ok", suggestions, headline };
+      _memCache = { fp, result };
+      writePersistentCache({ fp, result, ts: Date.now() });
+      return result;
     }
 
-    // Fonksiyon çalıştı ama öneri yok (parse edilemedi vs.)
+    // Boş döndü. data.error varsa bu KOTA/parse hatasıdır (veri azlığı DEĞİL):
+    // yanıltıcı "daha çok başvur" mesajı yerine "hata" durumu döndür.
+    if (data?.error) {
+      if (persisted?.result.status === "ok") return persisted.result;
+      return { status: "error", message: "Pusula şu an yorum üretemedi. Biraz sonra tekrar dener." };
+    }
     return { status: "empty" };
   } catch (err) {
     console.error("ai-suggestions beklenmeyen hata:", err);
+    if (persisted?.result.status === "ok") return persisted.result;
     return { status: "error", message: "Bir şeyler ters gitti." };
   }
 }
