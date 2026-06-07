@@ -649,11 +649,7 @@ const handleSignOut = async () => {
                 onValueChange={setSilentMode}
                 disabled={!notificationsEnabled}
               />
-              <SettingRow
-                label="Aşama yönetimi"
-                onPress={() => router.push("/settings/stages")}
-                isLast
-              />
+
             </Card>
           </View>
 
@@ -662,9 +658,7 @@ const handleSignOut = async () => {
             <Card padding={0}>
               <SettingRow
                 label="Profil bilgilerim"
-                onPress={() =>
-                  notify("Yakında", "Bu özellik üzerinde çalışıyoruz.")
-                }
+                onPress={() => router.push("/settings/profile-edit")}
               />
               <SettingRow
                 label="CV / Özgeçmiş"

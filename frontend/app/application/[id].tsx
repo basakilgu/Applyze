@@ -1,6 +1,6 @@
 // app/application/[id].tsx — Application Detail
 import React, { useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
+import { View, Text, ScrollView, Pressable, TextInput, Linking, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -215,6 +215,18 @@ export default function ApplicationDetailScreen() {
     showSaved();
   };
 
+  const handleDeleteNote = async (noteId: string) => {
+    const ok = await confirmAction({
+      title: "Notu sil",
+      message: "Bu not silinecek. Geri alınamaz.",
+      confirmText: "Sil",
+      destructive: true,
+    });
+    if (!ok) return;
+    await mockStore.deleteNote(noteId);
+    showSaved();
+  };
+
   const handleToggleFavorite = () => {
     mockStore.toggleFavorite(app.id);
     showSaved();
@@ -272,6 +284,17 @@ export default function ApplicationDetailScreen() {
       console.error("[detail] analyze-fit failed:", e);
       setFitErr("Bir şeyler ters gitti. Tekrar dene.");
       setFitLoading(false);
+    }
+  };
+
+  const openSource = () => {
+    if (!app.source_url) return;
+    let url = app.source_url.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    if (Platform.OS === "web") {
+      if (typeof window !== "undefined") window.open(url, "_blank");
+    } else {
+      Linking.openURL(url);
     }
   };
 
@@ -452,9 +475,14 @@ export default function ApplicationDetailScreen() {
                     borderColor: "rgba(235, 231, 223, 0.7)",
                   }}
                 >
-                  <Text style={{ fontSize: 11, color: "#8A8278", marginBottom: 6, fontFamily: "Menlo" }}>
-                    {formatDateTr(note.created_at)} · {getRelativeTimeTr(note.created_at)}
-                  </Text>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <Text style={{ fontSize: 11, color: "#8A8278", fontFamily: "Menlo" }}>
+                      {formatDateTr(note.created_at)} · {getRelativeTimeTr(note.created_at)}
+                    </Text>
+                    <Pressable onPress={() => handleDeleteNote(note.id)} hitSlop={8}>
+                      <Text style={{ fontSize: 12, color: "#A96458", fontFamily: "Inter_500Medium" }}>Sil</Text>
+                    </Pressable>
+                  </View>
                   <Text
                     style={{
                       fontSize: 14, color: "#1F1B16",
@@ -474,22 +502,24 @@ export default function ApplicationDetailScreen() {
           <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
             <SectionHeader title="Detaylar" />
             <Card padding={0}>
-              <View
-                style={{
+              <Pressable
+                onPress={openSource}
+                style={({ pressed }) => ({
                   paddingHorizontal: 16, paddingVertical: 14,
                   flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-                }}
+                  opacity: pressed ? 0.6 : 1,
+                })}
               >
                 <Text style={{ fontSize: 13, color: "#5C5650", fontFamily: "Inter_400Regular" }}>
                   İlan kaynağı
                 </Text>
                 <Text
-                  style={{ fontSize: 12, color: "#3D5A47", fontFamily: "Inter_500Medium", maxWidth: 200 }}
+                  style={{ fontSize: 12, color: "#3D5A47", fontFamily: "Inter_500Medium", maxWidth: 220, textDecorationLine: "underline" }}
                   numberOfLines={1}
                 >
-                  {app.source_url.replace(/^https?:\/\//, "")}
+                  {app.source_url.replace(/^https?:\/\//, "")} ↗
                 </Text>
-              </View>
+              </Pressable>
             </Card>
           </View>
         ) : null}
