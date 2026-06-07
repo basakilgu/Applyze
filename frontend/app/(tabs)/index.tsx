@@ -3,7 +3,7 @@
 // Chip'ler arası spacing düzgün, label + count yan yana, aktif durum belirgin.
 
 import React, { useState, useMemo } from "react";
-import { View, Text, ScrollView, Pressable, TextInput, FlatList } from "react-native";
+import { View, Text, ScrollView, Pressable, TextInput, FlatList, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -14,6 +14,7 @@ import { Badge } from "../../components/ui/Badge";
 import { EmptyState } from "../../components/ui/EmptyState";
 import {
   useApplications, getCounts, formatDateTr, getStageOrder, platformColors, platformLabels,
+  useLoadState,
 } from "../../lib/applications";
 import type { StageKey, Platform } from "../../types/database";
 
@@ -105,13 +106,27 @@ function StarIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function reminderInfo(iso?: string): { label: string; color: string } | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const now = new Date();
+  const td = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const days = Math.round((dd - td) / 86400000);
+  if (days < 0) return { label: "gecikti", color: "#A96458" };
+  if (days === 0) return { label: "bugün", color: "#A96458" };
+  if (days === 1) return { label: "yarın", color: "#8A5A00" };
+  return { label: `${days} gün sonra`, color: "#3D5A47" };
+}
+
 function ApplicationRow({
-  company, position, platform, stage, date, notesCount, isFavorite, fitScore, onPress,
+  company, position, platform, stage, date, notesCount, isFavorite, fitScore, reminderAt, stageName, stageColor, isCustomStage, onPress,
 }: {
   company: string; position: string; platform: Platform; stage: StageKey;
-  date: string; notesCount: number; isFavorite: boolean; fitScore?: number; onPress: () => void;
+  date: string; notesCount: number; isFavorite: boolean; fitScore?: number; reminderAt?: string; stageName?: string; stageColor?: string; isCustomStage?: boolean; onPress: () => void;
 }) {
   const order = getStageOrder(stage);
+  const rem = reminderAt ? reminderInfo(reminderAt) : null;
   const isRejected = stage === "rejected";
   const meta =
     `${formatDateTr(date)} · ${order}. aşama` +
@@ -164,7 +179,12 @@ function ApplicationRow({
             </Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Badge stage={stage} size="md" />
+            <Badge
+              stage={stage}
+              size="md"
+              customLabel={isCustomStage ? stageName : undefined}
+              customColor={isCustomStage ? stageColor : undefined}
+            />
             {fitScore != null && (
               <View style={{ marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "#E2E8D6" }}>
                 <Text style={{ fontSize: 11, color: "#3D5A47", fontFamily: "Inter_600SemiBold" }}>%{fitScore} uyum</Text>
@@ -180,6 +200,11 @@ function ApplicationRow({
         >
           {meta}
         </Text>
+        {rem ? (
+          <Text style={{ fontSize: 11, marginTop: 4, color: rem.color, fontFamily: "Inter_500Medium" }}>
+            Takip: {formatDateTr(reminderAt!)} · {rem.label}
+          </Text>
+        ) : null}
       </Card>
     </View>
   );
@@ -188,8 +213,10 @@ function ApplicationRow({
 export default function ApplicationsScreen() {
   const router = useRouter();
   const apps = useApplications();
+  const { loading, loaded, error, retry } = useLoadState();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "fit" | "stage">("date");
 
   const counts = useMemo(() => {
     const c = getCounts();
@@ -212,8 +239,13 @@ export default function ApplicationsScreen() {
         (a) => a.company_name.toLowerCase().includes(q) || a.position.toLowerCase().includes(q)
       );
     }
-    return list;
-  }, [apps, filter, search]);
+    const sorted = [...list].sort((a, b) => {
+      if (sortBy === "fit") return ((b.fit_score ?? -1) - (a.fit_score ?? -1));
+      if (sortBy === "stage") return getStageOrder(a.current_stage) - getStageOrder(b.current_stage);
+      return new Date(b.applied_at).getTime() - new Date(a.applied_at).getTime();
+    });
+    return sorted;
+  }, [apps, filter, search, sortBy]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FAF8F4" }}>
@@ -300,9 +332,32 @@ export default function ApplicationsScreen() {
           <FilterChip label="Favoriler" count={counts.favorites} active={filter === "favorites"} onPress={() => setFilter("favorites")} />
           <FilterChip label="Arşiv"     count={counts.archive}   active={filter === "archive"}   onPress={() => setFilter("archive")} />
         </ScrollView>
+
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 10, gap: 14 }}>
+          <Text style={{ fontSize: 12, color: "#8A8278", fontFamily: "Inter_500Medium" }}>Sırala:</Text>
+          {([["date", "Tarih"], ["fit", "Uyum"], ["stage", "Aşama"]] as const).map(([k, lbl]) => (
+            <Pressable key={k} onPress={() => setSortBy(k)} hitSlop={6}>
+              <Text style={{ fontSize: 13, color: sortBy === k ? "#3D5A47" : "#8A8278", fontFamily: sortBy === k ? "Inter_600SemiBold" : "Inter_400Regular" }}>
+                {lbl}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </SafeAreaView>
 
-      {filtered.length === 0 ? (
+      {!loaded && loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color="#3D5A47" />
+          <Text style={{ marginTop: 12, color: "#8A8278", fontFamily: "Inter_400Regular" }}>Yükleniyor…</Text>
+        </View>
+      ) : error && apps.length === 0 ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+          <Text style={{ color: "#5C5650", fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 14, lineHeight: 21 }}>{error}</Text>
+          <Pressable onPress={retry} style={{ height: 44, paddingHorizontal: 22, backgroundColor: "#3D5A47", borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ color: "#FAF8F4", fontFamily: "Inter_500Medium" }}>Tekrar dene</Text>
+          </Pressable>
+        </View>
+      ) : filtered.length === 0 ? (
         search.trim() ? (
           <EmptyState
             headline="Sonuç bulunamadı."
@@ -337,6 +392,10 @@ export default function ApplicationsScreen() {
               notesCount={app.notes.length}
               isFavorite={app.is_favorite ?? false}
               fitScore={app.fit_score}
+              reminderAt={app.reminder_at}
+              stageName={app.current_stage_name}
+              stageColor={app.current_stage_color}
+              isCustomStage={app.current_stage_is_custom}
               onPress={() => router.push(`/application/${app.id}`)}
             />
           )}

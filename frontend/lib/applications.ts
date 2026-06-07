@@ -80,6 +80,7 @@ type DbApplication = {
   fit_json: any | null;
   fit_basis: string | null;
   fit_at: string | null;
+  reminder_at: string | null;
 };
 
 type DbStage = {
@@ -137,8 +138,10 @@ function buildApplication(
     return {
       id: h.id,
       application_id: h.application_id,
+      stage_id: h.stage_id,
       stage_key: stageKey ?? "applied",
       stage_name: stage?.name ?? stageDisplayNames[stageKey ?? "applied"],
+      stage_color: stage?.color ?? undefined,
       changed_at: h.changed_at,
     };
   });
@@ -159,6 +162,16 @@ function buildApplication(
     platform: normalizePlatform(app.platform),
     source_url: app.source_url ?? undefined,
     current_stage: dbStageToStageKey(app.current_stage_id, stagesById),
+    current_stage_id: app.current_stage_id ?? undefined,
+    current_stage_name:
+      (app.current_stage_id ? stagesById.get(app.current_stage_id)?.name : undefined) ??
+      stageDisplayNames[dbStageToStageKey(app.current_stage_id, stagesById)],
+    current_stage_color: app.current_stage_id ? stagesById.get(app.current_stage_id)?.color ?? undefined : undefined,
+    current_stage_is_custom: (() => {
+      const st = app.current_stage_id ? stagesById.get(app.current_stage_id) : undefined;
+      const valid = ["applied", "screening", "interview", "manager", "offer", "rejected"];
+      return !!st && !(st.key && valid.includes(st.key));
+    })(),
     stage_history: history,
     notes,
     applied_at: app.applied_at,
@@ -169,6 +182,7 @@ function buildApplication(
     fit: (app.fit_json as any) ?? undefined,
     fit_basis: app.fit_basis ?? undefined,
     fit_at: app.fit_at ?? undefined,
+    reminder_at: app.reminder_at ?? undefined,
   };
 }
 
@@ -180,6 +194,7 @@ let _cache: Application[] = [];
 let _stagesCache: Stage[] = [];
 let _loaded = false;
 let _loading = false;
+let _error: string | null = null;
 const _listeners = new Set<() => void>();
 
 function notify() {
@@ -189,6 +204,8 @@ function notify() {
 async function loadFromSupabase() {
   if (_loading) return;
   _loading = true;
+  _error = null;
+  notify();
 
   try {
     const [appsRes, stagesRes, historyRes, notesRes] = await Promise.all([
@@ -239,11 +256,12 @@ async function loadFromSupabase() {
     }));
 
     _loaded = true;
-    notify();
   } catch (err) {
     console.error("[applications adapter] load failed:", err);
+    _error = "Veriler yüklenemedi. Bağlantını kontrol edip tekrar dene.";
   } finally {
     _loading = false;
+    notify();
   }
 }
 
@@ -440,6 +458,67 @@ export const applicationsStore = {
     await loadFromSupabase();
   },
 
+  async addCustomStage(name: string, afterOrder?: number): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) return null;
+
+    let newOrder: number;
+    if (afterOrder != null) {
+      // Araya ekle: eklenen aşamadan SONRAKİ tüm aşamaların sırasını 1 kaydır,
+      // sonra özel aşamayı tam araya koy (tam sayı — yuvarlama sorunu olmaz).
+      newOrder = Math.floor(afterOrder) + 1;
+      const toShift = _stagesCache
+        .filter((st) => st.order >= newOrder)
+        .sort((a, b) => b.order - a.order); // büyükten küçüğe kaydır
+      for (const st of toShift) {
+        await supabase.from("stages").update({ order: st.order + 1 }).eq("id", st.id);
+      }
+    } else {
+      newOrder = _stagesCache.reduce((m, st) => Math.max(m, st.order), 0) + 1;
+    }
+
+    const { data, error } = await supabase
+      .from("stages")
+      .insert({ user_id: uid, name: name.trim(), color: "#7A8AA0", order: newOrder, is_terminal: false, is_default: false, key: null })
+      .select("id")
+      .single();
+    if (error || !data) {
+      console.error("[applications adapter] addCustomStage failed:", error);
+      return null;
+    }
+    await loadFromSupabase();
+    return data.id as string;
+  },
+
+  async deleteStage(stageId: string): Promise<void> {
+    const { error } = await supabase.from("stages").delete().eq("id", stageId).eq("is_default", false);
+    if (error) {
+      console.error("[applications adapter] deleteStage failed:", error);
+      return;
+    }
+    await loadFromSupabase();
+  },
+
+  async updateStageById(appId: string, stageId: string): Promise<void> {
+    const { error } = await supabase.from("applications").update({ current_stage_id: stageId }).eq("id", appId);
+    if (error) {
+      console.error("[applications adapter] updateStageById failed:", error);
+      return;
+    }
+    await supabase.from("stage_history").insert({ application_id: appId, stage_id: stageId });
+    await loadFromSupabase();
+  },
+
+  async setReminder(id: string, iso: string | null): Promise<void> {
+    const { error } = await supabase.from("applications").update({ reminder_at: iso }).eq("id", id);
+    if (error) {
+      console.error("[applications adapter] setReminder failed:", error);
+      return;
+    }
+    await loadFromSupabase();
+  },
+
   async softDelete(id: string): Promise<void> {
     const { error } = await supabase
       .from("applications")
@@ -465,6 +544,16 @@ export const applicationsStore = {
 // ============================================================================
 // REACT HOOKS — mock ile aynı imza
 // ============================================================================
+
+export function useLoadState(): { loading: boolean; loaded: boolean; error: string | null; retry: () => void } {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!_loaded && !_loading) loadFromSupabase();
+    const unsub = applicationsStore.subscribe(() => force((n) => n + 1));
+    return unsub;
+  }, []);
+  return { loading: _loading, loaded: _loaded, error: _error, retry: () => loadFromSupabase() };
+}
 
 export function useApplications(): Application[] {
   const [, force] = useState(0);
@@ -634,7 +723,8 @@ export const mockStages: Stage[] = (() => {
 
 // Stage'leri dinamik almak için (cache yüklendikten sonra)
 export function getStages(): Stage[] {
-  return _stagesCache.length > 0 ? _stagesCache : mockStages;
+  const list = _stagesCache.length > 0 ? _stagesCache : mockStages;
+  return list.slice().sort((a, b) => a.order - b.order);
 }
 
 // Geriye dönük uyumluluk: mock'taki `mockStore` ismi

@@ -2,13 +2,13 @@
 // Supabase auth ile gerçek kullanıcı bilgisi.
 
 import React, { useMemo, useState, useId, useEffect } from "react";
-import { View, Text, ScrollView, Alert, Pressable, Switch, Platform } from "react-native";
+import { View, Text, ScrollView, Alert, Pressable, Switch, Platform, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
-import { useApplications } from "../../lib/applications";
+import { useApplications, mockStore, platformLabels, stageDisplayNames } from "../../lib/applications";
 import { supabase } from "../../lib/supabase";
 import { notify } from "../../lib/dialogs";
 
@@ -409,7 +409,39 @@ export default function ProfileScreen() {
     })();
   }, []);
 
-const handleSignOut = async () => {
+const handleExport = () => {
+    const apps = mockStore.getAll();
+    if (apps.length === 0) { notify("Veri yok", "Henüz dışa aktaracak başvurun yok."); return; }
+    const headers = ["Şirket", "Pozisyon", "Şehir", "Platform", "Aşama", "Başvuru Tarihi", "İlan Linki", "Notlar"];
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [headers.map(esc).join(",")];
+    for (const a of apps) {
+      lines.push([
+        a.company_name,
+        a.position,
+        a.location ?? "",
+        platformLabels[a.platform] ?? a.platform,
+        stageDisplayNames[a.current_stage] ?? a.current_stage,
+        formatDateLongTr(a.applied_at),
+        a.source_url ?? "",
+        (a.notes ?? []).map((n) => n.content).join(" | "),
+      ].map(esc).join(","));
+    }
+    const csv = "\ufeff" + lines.join("\n");
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "applyze_basvurularim.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } else {
+      notify("Web'den indir", "Verilerini şimdilik web sürümünden CSV olarak indirebilirsin.");
+    }
+  };
+
+  const handleSignOut = async () => {
     const confirmed =
       Platform.OS === "web"
         ? typeof window !== "undefined" &&
@@ -670,9 +702,7 @@ const handleSignOut = async () => {
               />
               <SettingRow
                 label="Verilerimi indir"
-                onPress={() =>
-                  notify("Verilerini indir", "Tüm başvurularını CSV olarak e-posta adresine göndereceğiz.")
-                }
+                onPress={handleExport}
                 isLast
               />
             </Card>
@@ -691,9 +721,14 @@ const handleSignOut = async () => {
               />
               <SettingRow
                 label="Geri bildirim gönder"
-                onPress={() =>
-                  notify("Geri bildirim", "feedback@applyze.com adresine yazabilirsin.")
-                }
+                onPress={() => {
+                  const mail = "mailto:basak.ilgu@ozu.edu.tr?subject=Applyze%20geri%20bildirim";
+                  if (Platform.OS === "web") {
+                    if (typeof window !== "undefined") window.location.href = mail;
+                  } else {
+                    Linking.openURL(mail);
+                  }
+                }}
               />
               <SettingRow label="Sürüm" value="1.0.0" isLast />
             </Card>
