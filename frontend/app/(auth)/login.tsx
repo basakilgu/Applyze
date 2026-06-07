@@ -68,6 +68,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   function resetMessages() {
     setError(null);
@@ -80,6 +81,7 @@ export default function LoginScreen() {
     setConfirmPassword("");
     setShowPassword(false);
     setShowConfirm(false);
+    setAcceptedTerms(false);
     resetMessages();
   }
 
@@ -118,6 +120,10 @@ export default function LoginScreen() {
       setError("Şifreler eşleşmiyor. İki alana da aynı şifreyi yaz.");
       return;
     }
+    if (!acceptedTerms) {
+      setError("Devam etmek için Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmelisin.");
+      return;
+    }
     setLoading(true);
     resetMessages();
 
@@ -150,7 +156,13 @@ export default function LoginScreen() {
     setLoading(true);
     resetMessages();
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    const redirectTo =
+      Platform.OS === "web" && typeof window !== "undefined"
+        ? `${window.location.origin}/reset-password`
+        : "https://applyze.vercel.app/reset-password"; // canlı web adresinle güncelle
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo,
+    });
 
     if (error) {
       setError(mapAuthError(error.message));
@@ -372,6 +384,35 @@ export default function LoginScreen() {
 
           <View style={{ flex: 1 }} />
 
+          {!isLogin && (
+            <Pressable
+              onPress={() => { setAcceptedTerms((v) => !v); if (error) setError(null); }}
+              style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 14, paddingRight: 4 }}
+            >
+              <View
+                style={{
+                  width: 20, height: 20, borderRadius: 6, marginRight: 10, marginTop: 1,
+                  borderWidth: 1.5,
+                  borderColor: acceptedTerms ? "#3D5A47" : "#D9D3C8",
+                  backgroundColor: acceptedTerms ? "#3D5A47" : "transparent",
+                  alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {acceptedTerms && (
+                  <Svg width={12} height={12} viewBox="0 0 12 12">
+                    <Path d="M 2.5 6.2 L 5 8.5 L 9.5 3.5" fill="none" stroke="#FAF8F4" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                )}
+              </View>
+              <Text style={{ flex: 1, fontSize: 12, color: "#5C5650", fontFamily: "Inter_400Regular", lineHeight: 18 }}>
+                <Text onPress={() => router.push("/legal/terms")} style={{ color: "#3D5A47", fontFamily: "Inter_500Medium", textDecorationLine: "underline" }}>Kullanım Koşulları</Text>
+                {" ve "}
+                <Text onPress={() => router.push("/legal/privacy")} style={{ color: "#3D5A47", fontFamily: "Inter_500Medium", textDecorationLine: "underline" }}>Gizlilik Politikası</Text>
+                {"'nı okudum ve kabul ediyorum."}
+              </Text>
+            </Pressable>
+          )}
+
           {/* Primary action */}
           <Pressable
             onPress={isLogin ? handleEmailLogin : handleEmailSignup}
@@ -483,8 +524,8 @@ export default function LoginScreen() {
         </Pressable>
 
         <Text style={{ fontSize: 11, color: "#B8B0A4", textAlign: "center", marginTop: 20, marginBottom: 8, fontFamily: "Inter_400Regular", lineHeight: 16 }}>
-          Devam ederek <Text style={{ color: "#5C5650" }}>Kullanım Koşulları</Text> ve{"\n"}
-          <Text style={{ color: "#5C5650" }}>Gizlilik Politikası</Text>'nı kabul etmiş olursun.
+          Devam ederek <Text onPress={() => router.push("/legal/terms")} style={{ color: "#3D5A47", fontFamily: "Inter_500Medium", textDecorationLine: "underline" }}>Kullanım Koşulları</Text> ve{"\n"}
+          <Text onPress={() => router.push("/legal/privacy")} style={{ color: "#3D5A47", fontFamily: "Inter_500Medium", textDecorationLine: "underline" }}>Gizlilik Politikası</Text>'nı kabul etmiş olursun.
         </Text>
       </SafeAreaView>
     </View>

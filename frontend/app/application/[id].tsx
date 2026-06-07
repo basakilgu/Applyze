@@ -1,6 +1,6 @@
 // app/application/[id].tsx — Application Detail
 import React, { useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -19,6 +19,7 @@ import {
 } from "../../lib/applications";
 import type { StageKey } from "../../types/database";
 import { confirmAction } from "../../lib/dialogs";
+import { supabase } from "../../lib/supabase";
 
 function MoreIcon({ color = "#1F1B16" }: { color?: string }) {
   return (
@@ -41,6 +42,21 @@ function StarIcon({ filled, color = "#C4A875" }: { filled: boolean; color?: stri
         strokeLinejoin="round"
       />
     </Svg>
+  );
+}
+
+function FitSection({ title, items, color }: { title: string; items: string[]; color: string }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Text style={{ fontSize: 12, color: "#5C5650", fontFamily: "Inter_600SemiBold", marginBottom: 5 }}>{title}</Text>
+      {items.map((it, i) => (
+        <View key={i} style={{ flexDirection: "row", marginBottom: 4 }}>
+          <Text style={{ color, marginRight: 7, fontSize: 13, lineHeight: 19 }}>•</Text>
+          <Text style={{ flex: 1, fontSize: 13, color: "#1F1B16", fontFamily: "Inter_400Regular", lineHeight: 19 }}>{it}</Text>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -150,6 +166,22 @@ export default function ApplicationDetailScreen() {
   const [noteSheetVisible, setNoteSheetVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // CV uyum analizi
+  const [fitJobText, setFitJobText] = useState("");
+  const [fitLoading, setFitLoading] = useState(false);
+  const [fitErr, setFitErr] = useState<string | null>(null);
+  const [fitNeedCv, setFitNeedCv] = useState(false);
+  const [fitResult, setFitResult] = useState<
+    { skor: number; guven: string; eslesme: string[]; eksikler: string[]; ats: string[]; vurgu: string[] } | null
+  >(null);
+  const [editingFit, setEditingFit] = useState(false);
+  const [fitBasis, setFitBasis] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const showSaved = () => {
+    setSavedMsg("Değişiklikler kaydedildi ✓");
+    setTimeout(() => setSavedMsg(null), 2500);
+  };
+
   if (!app) {
     return (
       <View style={{ flex: 1, backgroundColor: "#FAF8F4" }}>
@@ -171,6 +203,7 @@ export default function ApplicationDetailScreen() {
     const becomesInterview = newStage === "interview" || newStage === "manager";
 
     mockStore.updateStage(app.id, newStage);
+    showSaved();
 
     if (!wasInterview && becomesInterview) {
       setTimeout(() => router.push("/milestone"), 300);
@@ -179,10 +212,12 @@ export default function ApplicationDetailScreen() {
 
   const handleAddNote = (content: string) => {
     mockStore.addNote(app.id, content);
+    showSaved();
   };
 
   const handleToggleFavorite = () => {
     mockStore.toggleFavorite(app.id);
+    showSaved();
   };
 
   const handleMore = () => setMenuOpen(true);
@@ -205,6 +240,47 @@ export default function ApplicationDetailScreen() {
       router.back();
     }
   };
+
+  const handleFit = async () => {
+    setFitErr(null);
+    setFitNeedCv(false);
+    setFitResult(null);
+    const basis = fitJobText.trim().length >= 15 ? "ilan" : "kisitli";
+    let jobText = fitJobText.trim();
+    if (jobText.length < 15) {
+      const notes = (app.notes || []).map((n) => n.content).join("\n");
+      jobText = `Pozisyon: ${app.position}\nŞirket: ${app.company_name}${app.location ? "\nŞehir: " + app.location : ""}${notes ? "\nNotlar / aranan nitelikler:\n" + notes : ""}`.trim();
+    }
+    if (jobText.length < 15) {
+      setFitErr("Analiz için yeterli bilgi yok. İlan metnini yapıştır.");
+      return;
+    }
+    setFitLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-fit", { body: { job_text: jobText } });
+      if (error || !data) { setFitErr("Analiz alınamadı. Tekrar dene."); setFitLoading(false); return; }
+      const d = data as any;
+      if (d.error === "no_cv") { setFitNeedCv(true); setFitLoading(false); return; }
+      if (d.error) { setFitErr("Analiz üretilemedi. Tekrar dene."); setFitLoading(false); return; }
+      setFitResult(d);
+      setFitBasis(basis);
+      setEditingFit(false);
+      setFitLoading(false);
+      mockStore.saveFit(app.id, d, basis);
+      showSaved();
+    } catch (e) {
+      console.error("[detail] analyze-fit failed:", e);
+      setFitErr("Bir şeyler ters gitti. Tekrar dene.");
+      setFitLoading(false);
+    }
+  };
+
+  const shownFit = fitResult ?? app.fit ?? null;
+  const shownBasis = fitBasis ?? app.fit_basis ?? null;
+  const basisLabel =
+    shownBasis === "ilan" ? "İlan metnine göre"
+    : shownBasis === "kisitli" ? "Kısıtlı veriyle (pozisyon ve notlar)"
+    : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FAF8F4" }}>
@@ -286,11 +362,73 @@ export default function ApplicationDetailScreen() {
           </View>
         </View>
 
+        {/* Düzenle / Sil — sayfada görünür (ayrıca üst sağdaki ... menüsünde de var) */}
+        <View style={{ flexDirection: "row", paddingHorizontal: 20, gap: 10, marginBottom: 20 }}>
+          <View style={{ flex: 1 }}>
+            <Button label="Düzenle" onPress={handleEdit} variant="secondary" size="md" fullWidth />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button label="Sil" onPress={handleDelete} variant="danger" size="md" fullWidth />
+          </View>
+        </View>
+
         {/* Süreç (Stage timeline) */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <SectionHeader title="Süreç" />
           <Card padding={18}>
             <StageTimeline history={app.stage_history} current={app.current_stage} />
+          </Card>
+        </View>
+
+        {/* CV Uyumu */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <SectionHeader title="CV Uyumu" />
+          <Card padding={16}>
+            {shownFit && !editingFit ? (
+              <>
+                <View style={{ flexDirection: "row", alignItems: "baseline", marginBottom: 2 }}>
+                  <Text style={{ fontSize: 30, fontFamily: "Inter_600SemiBold", color: "#3D5A47", letterSpacing: -0.5 }}>%{shownFit.skor}</Text>
+                  <Text style={{ fontSize: 13, color: "#5C5650", marginLeft: 8, fontFamily: "Inter_400Regular" }}>uyum · güven: {shownFit.guven}</Text>
+                </View>
+                {basisLabel && (
+                  <Text style={{ fontSize: 11, color: "#8A8278", fontFamily: "Inter_400Regular", marginBottom: 2 }}>
+                    {basisLabel}{!fitResult && app.fit_at ? ` · ${getRelativeTimeTr(app.fit_at)}` : ""}
+                  </Text>
+                )}
+                <FitSection title="Eşleşen güçlü yönlerin" items={shownFit.eslesme} color="#3D5A47" />
+                <FitSection title="Geliştirilebilecekler" items={shownFit.eksikler} color="#8A5A00" />
+                <FitSection title="Eksik anahtar kelimeler (ATS)" items={shownFit.ats} color="#5C5650" />
+                <FitSection title="Başvuruda vurgula" items={shownFit.vurgu} color="#1F1B16" />
+                <Pressable onPress={() => { setEditingFit(true); setFitResult(null); }} style={{ marginTop: 12 }}>
+                  <Text style={{ fontSize: 13, color: "#3D5A47", fontFamily: "Inter_500Medium" }}>Yeniden analiz et</Text>
+                </Pressable>
+                <Text style={{ fontSize: 11, color: "#8A8278", marginTop: 8, fontStyle: "italic", fontFamily: "Inter_400Regular" }}>
+                  Bu analiz bir rehberdir, garanti değildir.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={{ fontSize: 13, color: "#5C5650", fontFamily: "Inter_400Regular", lineHeight: 19, marginBottom: 10 }}>
+                  Profilindeki CV ile bu başvuruyu karşılaştır. İlan metnini yapıştırırsan analiz daha isabetli olur; yapıştırmazsan pozisyon ve notlarından analiz edilir.
+                </Text>
+                <TextInput
+                  value={fitJobText}
+                  onChangeText={(t) => { setFitJobText(t); if (fitErr) setFitErr(null); }}
+                  placeholder="(Opsiyonel) İlan metnini buraya yapıştır…"
+                  placeholderTextColor="#B8B0A4"
+                  multiline
+                  style={{ minHeight: 70, borderRadius: 10, borderWidth: 1, borderColor: "#D9D3C8", backgroundColor: "#FFFFFF", padding: 12, fontSize: 13, color: "#1F1B16", fontFamily: "Inter_400Regular", textAlignVertical: "top", marginBottom: 10 }}
+                />
+                {fitErr && <Text style={{ fontSize: 12, color: "#A96458", fontFamily: "Inter_400Regular", marginBottom: 8 }}>{fitErr}</Text>}
+                {fitNeedCv && (
+                  <Text style={{ fontSize: 12, color: "#5C5650", fontFamily: "Inter_400Regular", marginBottom: 8, lineHeight: 18 }}>
+                    Önce profiline CV yüklemelisin.{" "}
+                    <Text onPress={() => router.push("/settings/cv")} style={{ color: "#3D5A47", fontFamily: "Inter_500Medium", textDecorationLine: "underline" }}>CV ekle</Text>
+                  </Text>
+                )}
+                <Button label={fitLoading ? "Analiz ediliyor…" : "CV uyumunu analiz et"} onPress={handleFit} variant="primary" size="md" loading={fitLoading} fullWidth />
+              </>
+            )}
           </Card>
         </View>
 
@@ -448,6 +586,14 @@ export default function ApplicationDetailScreen() {
             </Pressable>
           </View>
         </Pressable>
+      )}
+
+      {savedMsg && (
+        <View style={{ position: "absolute", left: 0, right: 0, bottom: 96, alignItems: "center", zIndex: 50 }} pointerEvents="none">
+          <View style={{ backgroundColor: "#3D5A47", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 }}>
+            <Text style={{ color: "#FAF8F4", fontFamily: "Inter_500Medium", fontSize: 13 }}>{savedMsg}</Text>
+          </View>
+        </View>
       )}
     </View>
   );

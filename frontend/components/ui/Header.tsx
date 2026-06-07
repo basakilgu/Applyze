@@ -33,7 +33,12 @@ export function Header({
   title, showBack = true, showClose = false, onBack, rightActions, variant = "light",
 }: Props) {
   const router = useRouter();
-  const handlePress = onBack ?? (() => router.back());
+  const handlePress =
+    onBack ??
+    (() => {
+      if (router.canGoBack()) router.back();
+      else router.replace("/(tabs)");
+    });
 
   const iconColor = variant === "dark" ? "#FAF8F4" : "#1F1B16";
   const titleColor = variant === "dark" ? "#FAF8F4" : "#1F1B16";

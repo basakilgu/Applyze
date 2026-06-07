@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 import { useApplications } from "../../lib/applications";
+import { supabase } from "../../lib/supabase";
 import { fetchAiSuggestions, type AiResult } from "../../lib/aiSuggestions";
 
 // =============================================================
@@ -59,12 +60,6 @@ const shadows = {
 };
 
 // =============================================================
-// USER (hardcoded — no external dep)
-// =============================================================
-
-const USER_NAME = "Başak";
-
-// =============================================================
 // HELPER FUNCTIONS (mockData'dan bağımsız, apps'i parametre alır)
 // =============================================================
 
@@ -99,11 +94,31 @@ function getRelativeTimeTr(iso: string): string {
 
 function getGreeting(name: string): string {
   const hour = new Date().getHours();
-  const firstName = name.split(" ")[0];
-  if (hour < 6) return `İyi geceler, ${firstName}`;
-  if (hour < 12) return `Günaydın, ${firstName}`;
-  if (hour < 18) return `İyi günler, ${firstName}`;
-  return `İyi akşamlar, ${firstName}`;
+  const firstName = name.trim().split(" ")[0];
+  const suffix = firstName ? `, ${firstName}` : "";
+  if (hour < 6) return `İyi geceler${suffix}`;
+  if (hour < 12) return `Günaydın${suffix}`;
+  if (hour < 18) return `İyi günler${suffix}`;
+  return `İyi akşamlar${suffix}`;
+}
+
+// Bir başvurunun son GERÇEK hareketi: en son aşama değişikliği (yoksa başvuru tarihi).
+// "Sessizlik" bununla ölçülür; favori/not gibi düzenlemeler sayacı sıfırlamasın diye
+// updated_at KULLANILMAZ.
+function lastActivityAt(app: any): string {
+  const hist = Array.isArray(app?.stage_history) ? app.stage_history : [];
+  let latest: string = app?.applied_at ?? new Date().toISOString();
+  let latestMs = new Date(latest).getTime();
+  for (const h of hist) {
+    if (h?.changed_at) {
+      const ms = new Date(h.changed_at).getTime();
+      if (ms > latestMs) {
+        latest = h.changed_at;
+        latestMs = ms;
+      }
+    }
+  }
+  return latest;
 }
 
 // Apps'ten counts hesapla (mockData'ya bağımsız)
@@ -137,8 +152,8 @@ function computeDashboardData(apps: any[]) {
   const recentMoves = [...apps]
     .sort(
       (a, b) =>
-        new Date(b.updated_at || b.applied_at).getTime() -
-        new Date(a.updated_at || a.applied_at).getTime()
+        new Date(lastActivityAt(b)).getTime() -
+        new Date(lastActivityAt(a)).getTime()
     )
     .slice(0, 3);
 
@@ -554,6 +569,18 @@ export default function DashboardScreen() {
   const router = useRouter();
   const apps = (useApplications() ?? []) as any[];
 
+  // Gerçek kullanıcı adını Supabase'ten al (sabit "Başak" yerine)
+  const [userName, setUserName] = useState("");
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const email = data.user?.email ?? "";
+      const name =
+        (data.user?.user_metadata?.full_name as string | undefined) ??
+        (email ? email.split("@")[0] : "");
+      setUserName(name);
+    });
+  }, []);
+
   const counts = useMemo(() => computeCounts(apps), [apps]);
   const data = useMemo(() => computeDashboardData(apps), [apps]);
   // ===========================================================
@@ -654,13 +681,13 @@ export default function DashboardScreen() {
     return apps
       .filter((a) => {
         if (a.current_stage === "rejected" || a.current_stage === "offer") return false;
-        const days = (now - new Date(a.updated_at || a.applied_at).getTime()) / dayMs;
+        const days = (now - new Date(lastActivityAt(a)).getTime()) / dayMs;
         return days >= 7;
       })
       .sort(
         (a, b) =>
-          new Date(a.updated_at || a.applied_at).getTime() -
-          new Date(b.updated_at || b.applied_at).getTime()
+          new Date(lastActivityAt(a)).getTime() -
+          new Date(lastActivityAt(b)).getTime()
       )
       .slice(0, 3);
   }, [apps]);
@@ -716,7 +743,7 @@ export default function DashboardScreen() {
                 lineHeight: 36,
               }}
             >
-              {getGreeting(USER_NAME)}
+              {getGreeting(userName)}
             </Text>
             <Text
               style={{
@@ -1009,8 +1036,7 @@ export default function DashboardScreen() {
               <Card padding={0}>
                 {waitingApps.map((app, idx) => {
                   const days = Math.floor(
-                    (Date.now() -
-                      new Date(app.updated_at || app.applied_at).getTime()) /
+                    (Date.now() - new Date(lastActivityAt(app)).getTime()) /
                       (1000 * 60 * 60 * 24)
                   );
                   return (
@@ -1104,7 +1130,7 @@ export default function DashboardScreen() {
                         numberOfLines={1}
                       >
                         {app.company_name} ·{" "}
-                        {getRelativeTimeTr(app.updated_at || app.applied_at)}
+                        {getRelativeTimeTr(lastActivityAt(app))}
                       </Text>
                     </View>
                     <Badge stage={app.current_stage} />
@@ -1166,43 +1192,86 @@ export default function DashboardScreen() {
                 )}
 
                 {/* DURUM 2: Başarılı — Gemini önerileri */}
-                {!aiLoading &&
-                  aiResult?.status === "ok" &&
-                  aiResult.suggestions.map((s, idx) => (
-                    <View
-                      key={idx}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 14,
-                        borderBottomWidth:
-                          idx === aiResult.suggestions.length - 1 ? 0 : 0.5,
-                        borderColor: "rgba(184, 201, 189, 0.14)",
-                        zIndex: 1,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          color: colors.sagePale,
-                          fontFamily: fonts.semibold,
-                          marginBottom: 4,
-                          lineHeight: 18,
-                        }}
-                      >
-                        {s.baslik}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          color: colors.cream100,
-                          fontFamily: fonts.regular,
-                          lineHeight: 19,
-                        }}
-                      >
-                        {s.metin}
-                      </Text>
-                    </View>
-                  ))}
+                {!aiLoading && aiResult?.status === "ok" && (
+                  <>
+                    {aiResult.headline ? (
+                      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 6, zIndex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            color: colors.sagePale,
+                            fontFamily: fonts.light,
+                            fontStyle: "italic",
+                            lineHeight: 20,
+                          }}
+                        >
+                          {aiResult.headline}
+                        </Text>
+                      </View>
+                    ) : null}
+                    {aiResult.suggestions.map((s, idx) => {
+                      const katLabels: Record<string, string> = {
+                        momentum: "Momentum",
+                        guclu_alan: "Güçlü alan",
+                        darbogaz: "Darboğaz",
+                        takip: "Takip",
+                        iyi_olus: "İyi oluş",
+                      };
+                      const kat = s.kategori ? katLabels[s.kategori] : undefined;
+                      const showTopBorder = idx === 0 && !!aiResult.headline;
+                      return (
+                        <View
+                          key={idx}
+                          style={{
+                            paddingHorizontal: 16,
+                            paddingVertical: 14,
+                            borderTopWidth: showTopBorder ? 0.5 : 0,
+                            borderBottomWidth:
+                              idx === aiResult.suggestions.length - 1 ? 0 : 0.5,
+                            borderColor: "rgba(184, 201, 189, 0.14)",
+                            zIndex: 1,
+                          }}
+                        >
+                          {kat ? (
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                color: colors.sageMist,
+                                fontFamily: fonts.medium,
+                                letterSpacing: 0.6,
+                                textTransform: "uppercase",
+                                marginBottom: 5,
+                              }}
+                            >
+                              {kat}
+                            </Text>
+                          ) : null}
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              color: colors.sagePale,
+                              fontFamily: fonts.semibold,
+                              marginBottom: 4,
+                              lineHeight: 18,
+                            }}
+                          >
+                            {s.baslik}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              color: colors.cream100,
+                              fontFamily: fonts.regular,
+                              lineHeight: 19,
+                            }}
+                          >
+                            {s.metin}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </>
+                )}
 
                 {/* DURUM 3: Boş — öneri üretilemedi */}
                 {!aiLoading && aiResult?.status === "empty" && (
