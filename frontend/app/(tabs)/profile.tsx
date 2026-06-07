@@ -393,16 +393,17 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        const email = data.user.email ?? "";
+      const { data: { session } } = await supabase.auth.getSession();
+      const u = session?.user;
+      if (u) {
+        const email = u.email ?? "";
         const fullName =
-          (data.user.user_metadata?.full_name as string | undefined) ??
+          (u.user_metadata?.full_name as string | undefined) ??
           email.split("@")[0]; // metadata yoksa email'in kullanıcı kısmını göster
         setUser({
           full_name: fullName,
           email,
-          member_since: data.user.created_at ?? new Date().toISOString(),
+          member_since: u.created_at ?? new Date().toISOString(),
         });
       }
     })();
@@ -465,7 +466,17 @@ const handleSignOut = async () => {
 
     if (!confirmed) return;
 
-    // TODO: gerçek hesap silme akışı (Edge Function ile)
+    // Gerçek hesap silme: delete-account Edge Function kullanıcıyı ve tüm
+    // verisini (cascade) siler. Oturum token'ı invoke ile otomatik gönderilir.
+    const { error } = await supabase.functions.invoke("delete-account", {
+      method: "POST",
+    });
+    if (error) {
+      console.error("[profile] hesap silme hatası:", error);
+      notify("Hesap silinemedi", "Bir sorun oluştu. Lütfen biraz sonra tekrar dene.");
+      return;
+    }
+
     await supabase.auth.signOut();
     router.replace("/(auth)/login");
   };
@@ -656,6 +667,14 @@ const handleSignOut = async () => {
                 }
               />
               <SettingRow
+                label="CV / Özgeçmiş"
+                onPress={() => router.push("/settings/cv")}
+              />
+              <SettingRow
+                label="Toplu içe aktar (Excel/CSV)"
+                onPress={() => router.push("/settings/import")}
+              />
+              <SettingRow
                 label="Verilerimi indir"
                 onPress={() =>
                   notify("Verilerini indir", "Tüm başvurularını CSV olarak e-posta adresine göndereceğiz.")
@@ -670,15 +689,11 @@ const handleSignOut = async () => {
             <Card padding={0}>
               <SettingRow
                 label="Gizlilik Politikası"
-                onPress={() =>
-                  notify("Gizlilik", "Verilerin bu cihazdan ayrılmadan, şifreli olarak saklanır.")
-                }
+                onPress={() => router.push("/legal/privacy")}
               />
               <SettingRow
                 label="Kullanım Koşulları"
-                onPress={() =>
-                  notify("Koşullar", "Bu özellik geliştirme aşamasında.")
-                }
+                onPress={() => router.push("/legal/terms")}
               />
               <SettingRow
                 label="Geri bildirim gönder"

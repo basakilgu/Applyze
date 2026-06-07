@@ -26,6 +26,8 @@ export default function EditApplicationScreen() {
   const [location, setLocation] = useState("");
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const [sourceUrl, setSourceUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (app) {
@@ -39,19 +41,25 @@ export default function EditApplicationScreen() {
 
   if (!app) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!position.trim() || !companyName.trim()) {
       notify("Eksik bilgi", "Pozisyon ve şirket alanları zorunlu.");
       return;
     }
-    mockStore.update(app.id, {
+    setSaving(true);
+    await mockStore.update(app.id, {
       position: position.trim(),
       company_name: companyName.trim(),
       location: location.trim() || undefined,
       platform,
       source_url: sourceUrl.trim() || undefined,
     });
-    router.back();
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => {
+      if (router.canGoBack()) router.back();
+      else router.replace(`/application/${app.id}`);
+    }, 900);
   };
 
   const handleDelete = async () => {
@@ -156,7 +164,12 @@ export default function EditApplicationScreen() {
       >
         <SafeAreaView edges={["bottom"]}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-            <Button label="Kaydet" onPress={handleSave} variant="primary" size="lg" fullWidth />
+            {saved && (
+              <Text style={{ fontSize: 13, color: "#3D5A47", fontFamily: "Inter_500Medium", textAlign: "center", marginBottom: 10 }}>
+                Değişiklikler kaydedildi ✓
+              </Text>
+            )}
+            <Button label={saving ? "Kaydediliyor…" : "Kaydet"} onPress={handleSave} variant="primary" size="lg" fullWidth loading={saving} />
           </View>
         </SafeAreaView>
       </View>

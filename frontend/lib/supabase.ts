@@ -26,6 +26,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: Platform.OS === "web" ? undefined : ExpoSecureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Web: şifre sıfırlama/e-posta linkindeki token URL'den okunup oturuma çevrilir.
+    detectSessionInUrl: Platform.OS === "web",
   },
 });

@@ -76,6 +76,10 @@ type DbApplication = {
   updated_at: string;
   deleted_at: string | null;
   is_favorite: boolean | null;
+  fit_score: number | null;
+  fit_json: any | null;
+  fit_basis: string | null;
+  fit_at: string | null;
 };
 
 type DbStage = {
@@ -161,6 +165,10 @@ function buildApplication(
     updated_at: app.updated_at,
     deleted_at: app.deleted_at ?? undefined,
     is_favorite: app.is_favorite ?? false,
+    fit_score: app.fit_score ?? undefined,
+    fit: (app.fit_json as any) ?? undefined,
+    fit_basis: app.fit_basis ?? undefined,
+    fit_at: app.fit_at ?? undefined,
   };
 }
 
@@ -280,12 +288,14 @@ export const applicationsStore = {
     source_url?: string;
     initial_stage?: StageKey;
     initial_note?: string;
+    applied_at?: string;
   }): Promise<Application | null> {
     const stageKey = input.initial_stage ?? "applied";
     const stageId = findStageIdByKey(stageKey);
 
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) {
       console.error("[applications adapter] add: no user");
       return null;
     }
@@ -293,13 +303,14 @@ export const applicationsStore = {
     const { data, error } = await supabase
       .from("applications")
       .insert({
-        user_id: user.user.id,
+        user_id: uid,
         company_name: input.company_name,
         position: input.position,
         location: input.location ?? null,
         platform: input.platform,
         source_url: input.source_url ? normalizeUrl(input.source_url) : null,
         current_stage_id: stageId ?? null,
+        ...(input.applied_at ? { applied_at: input.applied_at } : {}),
       })
       .select()
       .single();
@@ -313,6 +324,7 @@ export const applicationsStore = {
       await supabase.from("stage_history").insert({
         application_id: data.id,
         stage_id: stageId,
+        ...(input.applied_at ? { changed_at: input.applied_at } : {}),
       });
     }
 
@@ -399,6 +411,22 @@ export const applicationsStore = {
       return;
     }
 
+    await loadFromSupabase();
+  },
+
+  async saveFit(
+    id: string,
+    result: { skor: number; guven: string; eslesme: string[]; eksikler: string[]; ats: string[]; vurgu: string[] },
+    basis: string,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from("applications")
+      .update({ fit_score: result.skor, fit_json: result, fit_basis: basis, fit_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      console.error("[applications adapter] saveFit failed:", error);
+      return;
+    }
     await loadFromSupabase();
   },
 

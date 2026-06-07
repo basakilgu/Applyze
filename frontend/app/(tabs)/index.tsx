@@ -106,10 +106,10 @@ function StarIcon({ filled }: { filled: boolean }) {
 }
 
 function ApplicationRow({
-  company, position, platform, stage, date, notesCount, isFavorite, onPress,
+  company, position, platform, stage, date, notesCount, isFavorite, fitScore, onPress,
 }: {
   company: string; position: string; platform: Platform; stage: StageKey;
-  date: string; notesCount: number; isFavorite: boolean; onPress: () => void;
+  date: string; notesCount: number; isFavorite: boolean; fitScore?: number; onPress: () => void;
 }) {
   const order = getStageOrder(stage);
   const isRejected = stage === "rejected";
@@ -163,7 +163,14 @@ function ApplicationRow({
               {company}
             </Text>
           </View>
-          <Badge stage={stage} size="md" />
+          <View style={{ alignItems: "flex-end" }}>
+            <Badge stage={stage} size="md" />
+            {fitScore != null && (
+              <View style={{ marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "#E2E8D6" }}>
+                <Text style={{ fontSize: 11, color: "#3D5A47", fontFamily: "Inter_600SemiBold" }}>%{fitScore} uyum</Text>
+              </View>
+            )}
+          </View>
         </View>
         <Text
           style={{
@@ -183,7 +190,6 @@ export default function ApplicationsScreen() {
   const apps = useApplications();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
-  const [searchVisible, setSearchVisible] = useState(false);
 
   const counts = useMemo(() => {
     const c = getCounts();
@@ -240,17 +246,6 @@ export default function ApplicationsScreen() {
 
           <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
             <Pressable
-              onPress={() => setSearchVisible(!searchVisible)}
-              style={({ pressed }) => ({
-                width: 38, height: 38, borderRadius: 10,
-                backgroundColor: searchVisible ? "#3D5A47" : "#F4F1EB",
-                alignItems: "center", justifyContent: "center",
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <SearchIcon color={searchVisible ? "#FAF8F4" : "#5C5650"} />
-            </Pressable>
-            <Pressable
               onPress={() => router.push("/application/new")}
               style={({ pressed }) => ({
                 width: 38, height: 38, borderRadius: 10,
@@ -267,8 +262,7 @@ export default function ApplicationsScreen() {
           </View>
         </View>
 
-        {searchVisible && (
-          <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+        <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
             <View
               style={{
                 flexDirection: "row", alignItems: "center",
@@ -283,7 +277,6 @@ export default function ApplicationsScreen() {
                 onChangeText={setSearch}
                 placeholder="Şirket veya pozisyon ara"
                 placeholderTextColor="#B8B0A4"
-                autoFocus
                 style={{ flex: 1, marginLeft: 10, fontSize: 14, color: "#1F1B16", fontFamily: "Inter_400Regular" }}
               />
               {search.length > 0 && (
@@ -295,7 +288,6 @@ export default function ApplicationsScreen() {
               )}
             </View>
           </View>
-        )}
 
         <ScrollView
           horizontal
@@ -344,6 +336,7 @@ export default function ApplicationsScreen() {
               date={app.applied_at}
               notesCount={app.notes.length}
               isFavorite={app.is_favorite ?? false}
+              fitScore={app.fit_score}
               onPress={() => router.push(`/application/${app.id}`)}
             />
           )}
