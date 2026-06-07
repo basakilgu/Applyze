@@ -17,6 +17,15 @@ import { supabase } from "../../lib/supabase";
 
 const platforms: Platform[] = ["linkedin", "kariyer", "youthall", "anbean", "other"];
 
+function detectPlatformFromUrl(url: string): Platform | null {
+  const u = (url || "").toLowerCase();
+  if (u.includes("linkedin")) return "linkedin";
+  if (u.includes("kariyer")) return "kariyer";
+  if (u.includes("youthall")) return "youthall";
+  if (u.includes("anbean")) return "anbean";
+  return null;
+}
+
 function FitSection({ title, items, color }: { title: string; items: string[]; color: string }) {
   if (!items || items.length === 0) return null;
   return (
@@ -460,7 +469,11 @@ export default function NewApplicationScreen() {
         <Input
           label="İLAN BAĞLANTISI"
           value={sourceUrl}
-          onChangeText={setSourceUrl}
+          onChangeText={(t) => {
+            setSourceUrl(t);
+            const pf = detectPlatformFromUrl(t);
+            if (pf) setPlatform(pf);
+          }}
           placeholder="https://..."
           autoCapitalize="none"
           keyboardType="url"

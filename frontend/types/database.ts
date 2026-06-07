@@ -58,6 +58,7 @@ export interface Application {
   fit?: { skor: number; guven: string; eslesme: string[]; eksikler: string[]; ats: string[]; vurgu: string[] };
   fit_basis?: string;
   fit_at?: string;
+  reminder_at?: string;
 }
 
 export interface UserProfile {

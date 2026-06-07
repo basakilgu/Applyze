@@ -80,6 +80,7 @@ type DbApplication = {
   fit_json: any | null;
   fit_basis: string | null;
   fit_at: string | null;
+  reminder_at: string | null;
 };
 
 type DbStage = {
@@ -169,6 +170,7 @@ function buildApplication(
     fit: (app.fit_json as any) ?? undefined,
     fit_basis: app.fit_basis ?? undefined,
     fit_at: app.fit_at ?? undefined,
+    reminder_at: app.reminder_at ?? undefined,
   };
 }
 
@@ -180,6 +182,7 @@ let _cache: Application[] = [];
 let _stagesCache: Stage[] = [];
 let _loaded = false;
 let _loading = false;
+let _error: string | null = null;
 const _listeners = new Set<() => void>();
 
 function notify() {
@@ -189,6 +192,8 @@ function notify() {
 async function loadFromSupabase() {
   if (_loading) return;
   _loading = true;
+  _error = null;
+  notify();
 
   try {
     const [appsRes, stagesRes, historyRes, notesRes] = await Promise.all([
@@ -239,11 +244,12 @@ async function loadFromSupabase() {
     }));
 
     _loaded = true;
-    notify();
   } catch (err) {
     console.error("[applications adapter] load failed:", err);
+    _error = "Veriler yüklenemedi. Bağlantını kontrol edip tekrar dene.";
   } finally {
     _loading = false;
+    notify();
   }
 }
 
@@ -440,6 +446,15 @@ export const applicationsStore = {
     await loadFromSupabase();
   },
 
+  async setReminder(id: string, iso: string | null): Promise<void> {
+    const { error } = await supabase.from("applications").update({ reminder_at: iso }).eq("id", id);
+    if (error) {
+      console.error("[applications adapter] setReminder failed:", error);
+      return;
+    }
+    await loadFromSupabase();
+  },
+
   async softDelete(id: string): Promise<void> {
     const { error } = await supabase
       .from("applications")
@@ -465,6 +480,16 @@ export const applicationsStore = {
 // ============================================================================
 // REACT HOOKS — mock ile aynı imza
 // ============================================================================
+
+export function useLoadState(): { loading: boolean; loaded: boolean; error: string | null; retry: () => void } {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!_loaded && !_loading) loadFromSupabase();
+    const unsub = applicationsStore.subscribe(() => force((n) => n + 1));
+    return unsub;
+  }, []);
+  return { loading: _loading, loaded: _loaded, error: _error, retry: () => loadFromSupabase() };
+}
 
 export function useApplications(): Application[] {
   const [, force] = useState(0);

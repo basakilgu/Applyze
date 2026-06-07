@@ -2,13 +2,13 @@
 // Sadece useApplications'ı dışarıdan alıyor. Tüm helper'lar ve UI bileşenleri içeride.
 
 import React, { useMemo, useId, useState, useEffect } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
-import { useApplications } from "../../lib/applications";
+import { useApplications, useLoadState } from "../../lib/applications";
 import { supabase } from "../../lib/supabase";
 import { fetchAiSuggestions, type AiResult } from "../../lib/aiSuggestions";
 
@@ -568,6 +568,7 @@ function WeeklyBars({ counts }: { counts: number[] }) {
 export default function DashboardScreen() {
   const router = useRouter();
   const apps = (useApplications() ?? []) as any[];
+  const { loading, loaded, error, retry } = useLoadState();
 
   // Gerçek kullanıcı adını Supabase'ten al (sabit "Başak" yerine)
   const [userName, setUserName] = useState("");
@@ -715,6 +716,19 @@ export default function DashboardScreen() {
     <View style={{ flex: 1, backgroundColor: colors.cream50 }}>
       <StatusBar style="dark" />
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        {!loaded && loading ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator color={colors.sage} />
+            <Text style={{ marginTop: 12, color: colors.ink500, fontFamily: fonts.regular }}>Yükleniyor…</Text>
+          </View>
+        ) : error && apps.length === 0 ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <Text style={{ color: colors.ink700, fontFamily: fonts.regular, textAlign: "center", marginBottom: 14, lineHeight: 21 }}>{error}</Text>
+            <Pressable onPress={retry} style={{ height: 44, paddingHorizontal: 22, backgroundColor: colors.sage, borderRadius: 10, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: "#FAF8F4", fontFamily: fonts.medium }}>Tekrar dene</Text>
+            </Pressable>
+          </View>
+        ) : (
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 48 }}
@@ -1396,6 +1410,7 @@ export default function DashboardScreen() {
             </View>
           )}
         </ScrollView>
+        )}
       </SafeAreaView>
     </View>
   );

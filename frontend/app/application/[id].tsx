@@ -13,6 +13,7 @@ import { Badge } from "../../components/ui/Badge";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { StageUpdateSheet } from "../../components/ui/StageUpdateSheet";
 import { NoteAddSheet } from "../../components/ui/NoteAddSheet";
+import { DatePicker } from "../../components/ui/DatePicker";
 import {
   useApplication, mockStore, mockStages, formatDateLongTr, formatDateTr, getRelativeTimeTr,
   platformColors, platformLabels, stageDisplayNames, getStageOrder,
@@ -157,6 +158,19 @@ function StageTimeline({ history, current }: { history: { stage_key: StageKey; c
   );
 }
 
+function reminderInfo(iso?: string): { label: string; color: string } | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const now = new Date();
+  const td = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const days = Math.round((dd - td) / 86400000);
+  if (days < 0) return { label: "gecikti", color: "#A96458" };
+  if (days === 0) return { label: "bugün", color: "#A96458" };
+  if (days === 1) return { label: "yarın", color: "#8A5A00" };
+  return { label: `${days} gün sonra`, color: "#3D5A47" };
+}
+
 export default function ApplicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -177,6 +191,7 @@ export default function ApplicationDetailScreen() {
   const [editingFit, setEditingFit] = useState(false);
   const [fitBasis, setFitBasis] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const [reminderOpen, setReminderOpen] = useState(false);
   const showSaved = () => {
     setSavedMsg("Değişiklikler kaydedildi ✓");
     setTimeout(() => setSavedMsg(null), 2500);
@@ -285,6 +300,16 @@ export default function ApplicationDetailScreen() {
       setFitErr("Bir şeyler ters gitti. Tekrar dene.");
       setFitLoading(false);
     }
+  };
+
+  const handleSetReminder = (d: Date) => {
+    const x = new Date(d); x.setHours(9, 0, 0, 0);
+    mockStore.setReminder(app.id, x.toISOString());
+    showSaved();
+  };
+  const handleClearReminder = async () => {
+    await mockStore.setReminder(app.id, null);
+    showSaved();
   };
 
   const openSource = () => {
@@ -455,6 +480,32 @@ export default function ApplicationDetailScreen() {
           </Card>
         </View>
 
+        {/* Takip Hatırlatması */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <SectionHeader title="Takip Hatırlatması" />
+          <Card padding={16}>
+            {app.reminder_at ? (
+              <>
+                <Text style={{ fontSize: 14, color: "#1F1B16", fontFamily: "Inter_500Medium" }}>
+                  {formatDateLongTr(app.reminder_at)}
+                  {reminderInfo(app.reminder_at) ? `  ·  ${reminderInfo(app.reminder_at)!.label}` : ""}
+                </Text>
+                <View style={{ flexDirection: "row", gap: 18, marginTop: 12 }}>
+                  <Pressable onPress={() => setReminderOpen(true)}><Text style={{ fontSize: 13, color: "#3D5A47", fontFamily: "Inter_500Medium" }}>Değiştir</Text></Pressable>
+                  <Pressable onPress={handleClearReminder}><Text style={{ fontSize: 13, color: "#A96458", fontFamily: "Inter_500Medium" }}>Kaldır</Text></Pressable>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={{ fontSize: 13, color: "#5C5650", fontFamily: "Inter_400Regular", lineHeight: 19, marginBottom: 12 }}>
+                  Bu başvuru için kendine bir takip tarihi koy; zamanı geldiğinde hatırlatalım.
+                </Text>
+                <Button label="Takip tarihi ekle" onPress={() => setReminderOpen(true)} variant="secondary" size="md" fullWidth />
+              </>
+            )}
+          </Card>
+        </View>
+
         {/* Notlar */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <SectionHeader title="Notlar" rightLabel="+ Yeni" onRightPress={() => setNoteSheetVisible(true)} />
@@ -556,6 +607,14 @@ export default function ApplicationDetailScreen() {
           </View>
         </SafeAreaView>
       </View>
+
+      <DatePicker
+        visible={reminderOpen}
+        value={app.reminder_at ? new Date(app.reminder_at) : new Date()}
+        minDate={new Date()}
+        onClose={() => setReminderOpen(false)}
+        onSelect={(d) => { handleSetReminder(d); setReminderOpen(false); }}
+      />
 
       <StageUpdateSheet
         visible={stageSheetVisible}
