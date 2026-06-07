@@ -8,6 +8,7 @@ import Svg, { Path } from "react-native-svg";
 import * as DocumentPicker from "expo-document-picker";
 import * as XLSX from "xlsx";
 import { supabase } from "../../lib/supabase";
+import { applicationsStore } from "../../lib/applications";
 
 type Row = {
   company_name: string;
@@ -87,6 +88,7 @@ export default function ImportScreen() {
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState<number | null>(null);
+  const [skipped, setSkipped] = useState(0);
   const [err, setErr] = useState<string | null>(null);
 
   const goBack = () => { if (router.canGoBack()) router.back(); else router.replace("/(tabs)/profile"); };
@@ -154,7 +156,7 @@ export default function ImportScreen() {
 
   const handleImport = async () => {
     if (rows.length === 0) return;
-    setImporting(true); setProgress(0); setErr(null);
+    setImporting(true); setProgress(0); setErr(null); setSkipped(0);
     const { data: { session } } = await supabase.auth.getSession();
     const uid = session?.user?.id;
     if (!uid) { setErr("Oturum bulunamadı."); setImporting(false); return; }
@@ -163,9 +165,22 @@ export default function ImportScreen() {
     const stageMap = new Map<string, string>();
     (stages ?? []).forEach((s: any) => { if (s.key) stageMap.set(s.key, s.id); });
 
+    // Tekrar kontrolu: "sirket|pozisyon" anahtari. Hem listede zaten olanlari
+    // hem de dosyanin kendi icindeki tekrarlari atlar.
+    const dedupKey = (c: any, p: any) => `${norm(c)}|${norm(p)}`;
+    const { data: existing } = await supabase
+      .from("applications")
+      .select("company_name,position")
+      .is("deleted_at", null);
+    const seen = new Set<string>((existing ?? []).map((e: any) => dedupKey(e.company_name, e.position)));
+
     let ok = 0;
+    let skip = 0;
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
+      const key = dedupKey(row.company_name, row.position);
+      if (seen.has(key)) { skip++; setProgress(i + 1); continue; }
+      seen.add(key);
       const stageId = stageMap.get(row.stageKey) ?? stageMap.get("applied") ?? null;
       try {
         const { data: app, error } = await supabase.from("applications").insert({
@@ -191,7 +206,9 @@ export default function ImportScreen() {
       } catch (e) { console.error("[import] row failed:", e); }
       setProgress(i + 1);
     }
+    await applicationsStore.refresh();
     setImporting(false);
+    setSkipped(skip);
     setDone(ok);
   };
 
@@ -266,7 +283,12 @@ export default function ImportScreen() {
 
         {done !== null && (
           <View style={{ marginTop: 8, alignItems: "center" }}>
-            <Text style={{ fontSize: 15, color: "#3D5A47", fontFamily: "Inter_600SemiBold", marginBottom: 12 }}>{done} başvuru içe aktarıldı ✓</Text>
+            <Text style={{ fontSize: 15, color: "#3D5A47", fontFamily: "Inter_600SemiBold", marginBottom: skipped > 0 ? 6 : 12 }}>{done} başvuru içe aktarıldı ✓</Text>
+            {skipped > 0 && (
+              <Text style={{ fontSize: 13, color: "#8A8278", fontFamily: "Inter_400Regular", marginBottom: 12, textAlign: "center" }}>
+                {skipped} tanesi zaten listende olduğu için atlandı.
+              </Text>
+            )}
             <Pressable onPress={() => router.replace("/(tabs)")} style={({ pressed }) => ({ height: 48, paddingHorizontal: 24, backgroundColor: "#3D5A47", borderRadius: 12, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.9 : 1 })}>
               <Text style={{ color: "#FAF8F4", fontFamily: "Inter_500Medium", fontSize: 14 }}>Listeye git</Text>
             </Pressable>
