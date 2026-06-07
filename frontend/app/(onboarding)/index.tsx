@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 
 import { CompassMark } from "../../components/ui/CompassMark";
 import { setHasSeenOnboarding } from "../../lib/onboarding";
+import { supabase } from "../../lib/supabase";
 
 function ProgressDots({ active }: { active: 0 | 1 | 2 }) {
   return (
@@ -31,7 +32,8 @@ export default function Onboarding1() {
   const router = useRouter();
   const finishOnboarding = async () => {
     await setHasSeenOnboarding();
-    router.replace("/(tabs)");
+    const { data } = await supabase.auth.getSession();
+    router.replace(data.session ? "/(tabs)" : "/(auth)/login");
   };
 
   return (
