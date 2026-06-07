@@ -1,6 +1,6 @@
 // app/settings/stages.tsx
 import React from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Line } from "react-native-svg";
@@ -9,6 +9,7 @@ import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { mockStages, stageDisplayNames } from "../../lib/applications";
+import { notify } from "../../lib/dialogs";
 
 function DragHandle() {
   return (
@@ -22,19 +23,11 @@ function DragHandle() {
 
 export default function StagesSettingsScreen() {
   const handleEdit = (name: string) => {
-    Alert.alert(
-      name,
-      "Aşama düzenleme yakında eklenecek. Şimdilik varsayılan aşamalar kullanılıyor.",
-      [{ text: "Tamam" }]
-    );
+    notify(name, "Aşama düzenleme yakında eklenecek. Şimdilik standart aşamalar kullanılıyor.");
   };
 
   const handleAdd = () => {
-    Alert.alert(
-      "Yakında",
-      "Özel aşama ekleme yakında. Süreçlerinizi kişiselleştirmek için sabırla bekleyin.",
-      [{ text: "Tamam" }]
-    );
+    notify("Yakında", "Özel aşama ekleme ve sıralama yakında eklenecek. Şu an standart 6 aşama kullanılıyor.");
   };
 
   return (

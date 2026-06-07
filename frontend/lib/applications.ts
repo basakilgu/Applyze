@@ -347,6 +347,7 @@ export const applicationsStore = {
     if (updates.platform !== undefined) dbUpdates.platform = updates.platform;
     if (updates.source_url !== undefined) dbUpdates.source_url = updates.source_url ?? null;
     if (updates.is_favorite !== undefined) dbUpdates.is_favorite = updates.is_favorite;
+    if (updates.applied_at !== undefined) dbUpdates.applied_at = updates.applied_at;
 
     const { error } = await supabase.from("applications").update(dbUpdates).eq("id", id);
 
@@ -394,6 +395,15 @@ export const applicationsStore = {
       return;
     }
 
+    await loadFromSupabase();
+  },
+
+  async deleteNote(noteId: string): Promise<void> {
+    const { error } = await supabase.from("notes").delete().eq("id", noteId);
+    if (error) {
+      console.error("[applications adapter] deleteNote failed:", error);
+      return;
+    }
     await loadFromSupabase();
   },
 
