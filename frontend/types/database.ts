@@ -34,8 +34,10 @@ export interface Note {
 export interface StageHistoryEntry {
   id: string;
   application_id: string;
+  stage_id: string;
   stage_key: StageKey;
   stage_name: string;
+  stage_color?: string;
   changed_at: string;
 }
 
@@ -48,6 +50,10 @@ export interface Application {
   platform: Platform;
   source_url?: string;
   current_stage: StageKey;
+  current_stage_id?: string;
+  current_stage_name?: string;
+  current_stage_color?: string;
+  current_stage_is_custom?: boolean;
   stage_history: StageHistoryEntry[];
   notes: Note[];
   applied_at: string;

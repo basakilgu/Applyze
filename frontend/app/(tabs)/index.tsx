@@ -120,10 +120,10 @@ function reminderInfo(iso?: string): { label: string; color: string } | null {
 }
 
 function ApplicationRow({
-  company, position, platform, stage, date, notesCount, isFavorite, fitScore, reminderAt, onPress,
+  company, position, platform, stage, date, notesCount, isFavorite, fitScore, reminderAt, stageName, stageColor, isCustomStage, onPress,
 }: {
   company: string; position: string; platform: Platform; stage: StageKey;
-  date: string; notesCount: number; isFavorite: boolean; fitScore?: number; reminderAt?: string; onPress: () => void;
+  date: string; notesCount: number; isFavorite: boolean; fitScore?: number; reminderAt?: string; stageName?: string; stageColor?: string; isCustomStage?: boolean; onPress: () => void;
 }) {
   const order = getStageOrder(stage);
   const rem = reminderAt ? reminderInfo(reminderAt) : null;
@@ -179,7 +179,12 @@ function ApplicationRow({
             </Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Badge stage={stage} size="md" />
+            <Badge
+              stage={stage}
+              size="md"
+              customLabel={isCustomStage ? stageName : undefined}
+              customColor={isCustomStage ? stageColor : undefined}
+            />
             {fitScore != null && (
               <View style={{ marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: "#E2E8D6" }}>
                 <Text style={{ fontSize: 11, color: "#3D5A47", fontFamily: "Inter_600SemiBold" }}>%{fitScore} uyum</Text>
@@ -388,6 +393,9 @@ export default function ApplicationsScreen() {
               isFavorite={app.is_favorite ?? false}
               fitScore={app.fit_score}
               reminderAt={app.reminder_at}
+              stageName={app.current_stage_name}
+              stageColor={app.current_stage_color}
+              isCustomStage={app.current_stage_is_custom}
               onPress={() => router.push(`/application/${app.id}`)}
             />
           )}

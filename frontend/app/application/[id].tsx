@@ -16,7 +16,7 @@ import { NoteAddSheet } from "../../components/ui/NoteAddSheet";
 import { DatePicker } from "../../components/ui/DatePicker";
 import {
   useApplication, mockStore, mockStages, formatDateLongTr, formatDateTr, getRelativeTimeTr,
-  platformColors, platformLabels, stageDisplayNames, getStageOrder,
+  platformColors, platformLabels, stageDisplayNames, getStageOrder, getStages,
 } from "../../lib/applications";
 import type { StageKey } from "../../types/database";
 import { confirmAction } from "../../lib/dialogs";
@@ -61,10 +61,10 @@ function FitSection({ title, items, color }: { title: string; items: string[]; c
   );
 }
 
-function StageTimeline({ history, current }: { history: { stage_key: StageKey; changed_at: string }[]; current: StageKey }) {
-  const allStages = mockStages.filter((s) => s.key !== "rejected");
-  const currentOrder = getStageOrder(current);
-  const isRejected = current === "rejected";
+function StageTimeline({ history, currentStageId, currentKey }: { history: { stage_id: string; stage_key: StageKey; stage_name: string; stage_color?: string; changed_at: string }[]; currentStageId?: string; currentKey: StageKey }) {
+  const allStages = getStages().filter((s) => s.key !== "rejected");
+  const currentOrder = (allStages.find((s) => s.id === currentStageId)?.order) ?? 0;
+  const isRejected = currentKey === "rejected";
 
   if (isRejected) {
     return (
@@ -77,14 +77,14 @@ function StageTimeline({ history, current }: { history: { stage_key: StageKey; c
                 <View
                   style={{
                     width: 12, height: 12, borderRadius: 6,
-                    backgroundColor: h.stage_key === "rejected" ? "#A8908F" : "#3D5A47",
+                    backgroundColor: h.stage_color ?? (h.stage_key === "rejected" ? "#A8908F" : "#3D5A47"),
                   }}
                 />
                 {!isLast && <View style={{ width: 1.5, flex: 1, backgroundColor: "#D9D3C8", marginTop: 4, minHeight: 24 }} />}
               </View>
               <View style={{ flex: 1, paddingTop: -2 }}>
                 <Text style={{ fontSize: 13, color: "#1F1B16", fontFamily: "Inter_500Medium" }}>
-                  {stageDisplayNames[h.stage_key]}
+                  {h.stage_name}
                 </Text>
                 <Text style={{ fontSize: 11, color: "#8A8278", marginTop: 2, fontFamily: "Menlo" }}>
                   {formatDateLongTr(h.changed_at)}
@@ -101,7 +101,7 @@ function StageTimeline({ history, current }: { history: { stage_key: StageKey; c
     <View>
       {allStages.map((s, i) => {
         const isCompleted = s.order < currentOrder;
-        const isCurrent = s.order === currentOrder;
+        const isCurrent = s.id === currentStageId;
         const isUpcoming = s.order > currentOrder;
         const isLast = i === allStages.length - 1;
 
@@ -109,7 +109,7 @@ function StageTimeline({ history, current }: { history: { stage_key: StageKey; c
         const lineColor = isCompleted ? "#3D5A47" : "#EBE7DF";
         const labelColor = isUpcoming ? "#B8B0A4" : "#1F1B16";
 
-        const histEntry = history.find((h) => h.stage_key === s.key);
+        const histEntry = history.find((h) => h.stage_id === s.id);
 
         return (
           <View key={s.id} style={{ flexDirection: "row", marginBottom: isLast ? 0 : 14 }}>
@@ -139,7 +139,7 @@ function StageTimeline({ history, current }: { history: { stage_key: StageKey; c
                   fontFamily: isCurrent ? "Inter_600SemiBold" : "Inter_500Medium",
                 }}
               >
-                {stageDisplayNames[s.key]}
+                {s.name}
               </Text>
               {histEntry ? (
                 <Text style={{ fontSize: 11, color: "#8A8278", marginTop: 2, fontFamily: "Menlo" }}>
@@ -213,15 +213,36 @@ export default function ApplicationDetailScreen() {
     );
   }
 
-  const handleStageUpdate = (newStage: StageKey) => {
+  const handleStageUpdateById = (stageId: string) => {
+    const target = getStages().find((s) => s.id === stageId);
     const wasInterview = app.current_stage === "interview" || app.current_stage === "manager";
-    const becomesInterview = newStage === "interview" || newStage === "manager";
-
-    mockStore.updateStage(app.id, newStage);
+    const becomesInterview = target?.key === "interview" || target?.key === "manager";
+    mockStore.updateStageById(app.id, stageId);
     showSaved();
-
     if (!wasInterview && becomesInterview) {
       setTimeout(() => router.push("/milestone"), 300);
+    }
+  };
+
+  const handleDeleteStage = async (stageId: string) => {
+    const ok = await confirmAction({
+      title: "Aşamayı sil",
+      message: "Bu özel aşama silinecek. Bu aşamadaki başvurular 'Başvuruldu'ya döner.",
+      confirmText: "Sil",
+      destructive: true,
+    });
+    if (!ok) return;
+    await mockStore.deleteStage(stageId);
+    showSaved();
+  };
+
+  const handleAddStage = async (name: string) => {
+    const cur = getStages().find((s) => s.id === app.current_stage_id);
+    const afterOrder = cur?.order ?? getStageOrder(app.current_stage);
+    const newId = await mockStore.addCustomStage(name, afterOrder);
+    if (newId) {
+      await mockStore.updateStageById(app.id, newId);
+      showSaved();
     }
   };
 
@@ -401,7 +422,12 @@ export default function ApplicationDetailScreen() {
           </Text>
 
           <View style={{ flexDirection: "row", marginTop: 12 }}>
-            <Badge stage={app.current_stage} size="md" />
+            <Badge
+              stage={app.current_stage}
+              size="md"
+              customLabel={app.current_stage_is_custom ? app.current_stage_name : undefined}
+              customColor={app.current_stage_is_custom ? app.current_stage_color : undefined}
+            />
             <View style={{ marginLeft: 10, justifyContent: "center" }}>
               <Text style={{ fontSize: 11, color: "#8A8278", fontFamily: "Menlo" }}>
                 {formatDateTr(app.applied_at)} · {getStageOrder(app.current_stage)}. aşama
@@ -424,7 +450,7 @@ export default function ApplicationDetailScreen() {
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <SectionHeader title="Süreç" />
           <Card padding={18}>
-            <StageTimeline history={app.stage_history} current={app.current_stage} />
+            <StageTimeline history={app.stage_history} currentStageId={app.current_stage_id} currentKey={app.current_stage} />
           </Card>
         </View>
 
@@ -619,8 +645,10 @@ export default function ApplicationDetailScreen() {
       <StageUpdateSheet
         visible={stageSheetVisible}
         onClose={() => setStageSheetVisible(false)}
-        currentStage={app.current_stage}
-        onSelect={handleStageUpdate}
+        currentStageId={app.current_stage_id}
+        onSelectId={handleStageUpdateById}
+        onAddStage={handleAddStage}
+        onDeleteStage={handleDeleteStage}
       />
 
       <NoteAddSheet
