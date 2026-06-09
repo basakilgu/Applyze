@@ -214,14 +214,8 @@ export default function ApplicationDetailScreen() {
   }
 
   const handleStageUpdateById = (stageId: string) => {
-    const target = getStages().find((s) => s.id === stageId);
-    const wasInterview = app.current_stage === "interview" || app.current_stage === "manager";
-    const becomesInterview = target?.key === "interview" || target?.key === "manager";
     mockStore.updateStageById(app.id, stageId);
     showSaved();
-    if (!wasInterview && becomesInterview) {
-      setTimeout(() => router.push("/milestone"), 300);
-    }
   };
 
   const handleDeleteStage = async (stageId: string) => {

@@ -1,121 +1,196 @@
-// app/milestone.tsx — Milestone (Anlamlı an)
-import React, { useEffect, useRef } from "react";
-import { View, Text, Pressable, Animated, Easing } from "react-native";
+// app/milestone.tsx — "Yolculuğum / Eşikler": başvuru yolculuğunun anlamlı özeti.
+import React, { useMemo } from "react";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
-import { CompassMark } from "../components/ui/CompassMark";
 import { Header } from "../components/ui/Header";
+import {
+  useApplications,
+  getMetrics,
+  getCounts,
+  formatDateLongTr,
+} from "../lib/applications";
+
+const C = {
+  bg: "#FAF8F4",
+  card: "#FFFFFF",
+  border: "#EBE7DF",
+  ink: "#1F1B16",
+  muted: "#5C5650",
+  faint: "#8A8278",
+  sage: "#3D5A47",
+  sageTint: "#F1F4EF",
+  sageText: "#2F4639",
+};
+const F = {
+  light: "Inter_300Light",
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semibold: "Inter_600SemiBold",
+};
+const DAY = 24 * 60 * 60 * 1000;
+
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <Text style={{ fontSize: 11, color: C.faint, fontFamily: F.medium, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 12, marginTop: 28 }}>
+      {children}
+    </Text>
+  );
+}
 
 export default function MilestoneScreen() {
-  const router = useRouter();
-  const fade = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.92)).current;
+  const apps = useApplications();
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fade, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
-  }, [fade, scale]);
+  const d = useMemo(() => {
+    if (!apps || apps.length === 0) return null;
+
+    const firstApplied = Math.min(...apps.map((a) => new Date(a.applied_at).getTime()));
+    const earliest = (pred: (k: string) => boolean): number | null => {
+      let min = Infinity;
+      for (const a of apps) {
+        for (const h of a.stage_history) {
+          if (pred(h.stage_key)) {
+            const t = new Date(h.changed_at).getTime();
+            if (t < min) min = t;
+          }
+        }
+      }
+      return min === Infinity ? null : min;
+    };
+
+    const reached = (pred: (k: string) => boolean) =>
+      apps.filter((a) => a.stage_history.some((h) => pred(h.stage_key))).length;
+
+    const total = apps.length;
+    const screening = reached((k) => k === "screening" || k === "interview" || k === "manager" || k === "offer");
+    const interview = reached((k) => k === "interview" || k === "manager" || k === "offer");
+    const offer = reached((k) => k === "offer");
+
+    const milestones = [
+      { key: "applied", label: "İlk başvuru", at: firstApplied, hint: "Yolculuk başladı" },
+      { key: "screening", label: "İlk geri dönüş", at: earliest((k) => k === "screening"), hint: "Biri seni fark etti" },
+      { key: "interview", label: "İlk mülakat", at: earliest((k) => k === "interview" || k === "manager"), hint: "İlk açılan kapı" },
+      { key: "offer", label: "İlk teklif", at: earliest((k) => k === "offer"), hint: "Emeğin karşılığı" },
+    ];
+
+    const counts = getCounts();
+    const metrics = getMetrics();
+    const daysActive = Math.max(1, Math.floor((Date.now() - firstApplied) / DAY));
+
+    return {
+      total, screening, interview, offer, milestones, counts, metrics, daysActive,
+      pct: (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0),
+    };
+  }, [apps]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#1A2622" }}>
-      <StatusBar style="light" />
-      <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
-        <Header
-          title=""
-          showBack={false}
-          showClose
-          variant="dark"
-        />
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <StatusBar style="dark" />
+      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        <Header title="Yolculuğum" showBack={false} showClose />
 
-        <View style={{ flex: 1, paddingHorizontal: 32, alignItems: "center" }}>
-          <View style={{ flex: 0.4 }} />
-
-          {/* Tagline */}
-          <Animated.Text
-            style={{
-              fontSize: 11, color: "#B8C9BD",
-              letterSpacing: 3.2,
-              fontFamily: "Inter_500Medium",
-              marginBottom: 36,
-              opacity: fade,
-            }}
-          >
-            BİR AN
-          </Animated.Text>
-
-          {/* Compass */}
-          <Animated.View style={{ opacity: fade, transform: [{ scale }] }}>
-            <CompassMark size={110} variant="glow-dark" color="#FAF8F4" haloColor="#3D5A47" />
-          </Animated.View>
-
-          {/* Headline — italic poetic */}
-          <Animated.View style={{ marginTop: 56, opacity: fade }}>
-            <Text
-              style={{
-                fontSize: 12, color: "#B8C9BD",
-                letterSpacing: 2.4, textAlign: "center",
-                fontFamily: "Inter_500Medium",
-                marginBottom: 18,
-              }}
-            >
-              YENİ MÜLAKAT
+        {!d ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <Text style={{ fontSize: 15, color: C.muted, fontFamily: F.regular, textAlign: "center", lineHeight: 22 }}>
+              Henüz başvuru yok. İlk başvurunu ekleyince yolculuğun burada görünmeye başlayacak.
             </Text>
-
-            <Text
-              style={{
-                fontSize: 36, color: "#FAF8F4",
-                fontFamily: "Inter_300Light",
-                textAlign: "center",
-                lineHeight: 46, letterSpacing: -0.5,
-              }}
-            >
-              İlk açılan kapı.
-            </Text>
-          </Animated.View>
-
-          {/* Subtitle */}
-          <Animated.View style={{ marginTop: 24, opacity: fade }}>
-            <Text
-              style={{
-                fontSize: 14, color: "#B8B0A4",
-                textAlign: "center",
-                fontFamily: "Inter_400Regular",
-                lineHeight: 21, maxWidth: 290,
-              }}
-            >
-              Süreç ilerliyor. Yolun bir aşamasını daha geçtin —{"\n"}
-              pusulan yön bulmaya başladı.
-            </Text>
-          </Animated.View>
-
-          <View style={{ flex: 1 }} />
-
-          {/* CTA */}
-          <Animated.View style={{ width: "100%", paddingBottom: 16, opacity: fade }}>
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => ({
-                height: 52, backgroundColor: "#FAF8F4", borderRadius: 12,
-                alignItems: "center", justifyContent: "center",
-                opacity: pressed ? 0.92 : 1,
-                transform: [{ scale: pressed ? 0.99 : 1 }],
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: 15, color: "#1F1B16",
-                  fontFamily: "Inter_500Medium", letterSpacing: 0.1,
-                }}
-              >
-                Yolculuğuma bak
+          </View>
+        ) : (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }}>
+            {/* Özet kahraman */}
+            <View style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 34, color: C.ink, fontFamily: F.light, letterSpacing: -0.6 }}>
+                {d.total} başvuru
               </Text>
-            </Pressable>
-          </Animated.View>
-        </View>
+              <Text style={{ fontSize: 14, color: C.faint, fontFamily: F.regular, marginTop: 4 }}>
+                {d.daysActive} gündür yoldasın · {d.counts.active} tanesi hâlâ açık
+              </Text>
+            </View>
+
+            {/* Eşikler */}
+            <SectionTitle>Eşikler</SectionTitle>
+            <View style={{ backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.border, overflow: "hidden" }}>
+              {d.milestones.map((m, i) => {
+                const done = m.at != null;
+                return (
+                  <View
+                    key={m.key}
+                    style={{
+                      flexDirection: "row", alignItems: "center",
+                      paddingHorizontal: 16, paddingVertical: 14,
+                      borderBottomWidth: i < d.milestones.length - 1 ? 1 : 0, borderBottomColor: C.border,
+                      opacity: done ? 1 : 0.55,
+                    }}
+                  >
+                    <View style={{
+                      width: 30, height: 30, borderRadius: 15, marginRight: 14,
+                      alignItems: "center", justifyContent: "center",
+                      backgroundColor: done ? C.sage : "#ECE8E0",
+                    }}>
+                      <Text style={{ color: done ? "#FFFFFF" : C.faint, fontSize: 14, fontFamily: F.semibold }}>
+                        {done ? "✓" : (i + 1).toString()}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, color: C.ink, fontFamily: F.medium }}>{m.label}</Text>
+                      <Text style={{ fontSize: 12, color: C.faint, fontFamily: F.regular, marginTop: 2 }}>
+                        {done ? m.hint : "henüz değil"}
+                      </Text>
+                    </View>
+                    {done && (
+                      <Text style={{ fontSize: 12, color: C.sageText, fontFamily: F.medium }}>
+                        {formatDateLongTr(new Date(m.at as number).toISOString())}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Huni & dönüşüm */}
+            <SectionTitle>Huni & dönüşüm</SectionTitle>
+            <View style={{ backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16 }}>
+              {[
+                { label: "Başvuru", n: d.total, pct: 100 },
+                { label: "Geri dönüş", n: d.screening, pct: d.pct(d.screening) },
+                { label: "Mülakat", n: d.interview, pct: d.pct(d.interview) },
+                { label: "Teklif", n: d.offer, pct: d.pct(d.offer) },
+              ].map((row, i) => (
+                <View key={row.label} style={{ marginBottom: i < 3 ? 14 : 0 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                    <Text style={{ fontSize: 13, color: C.ink, fontFamily: F.medium }}>{row.label}</Text>
+                    <Text style={{ fontSize: 13, color: C.muted, fontFamily: F.regular }}>
+                      {row.n}{i > 0 ? `  ·  %${row.pct}` : ""}
+                    </Text>
+                  </View>
+                  <View style={{ height: 8, borderRadius: 4, backgroundColor: C.sageTint, overflow: "hidden" }}>
+                    <View style={{ height: 8, borderRadius: 4, width: `${Math.max(row.pct, 2)}%`, backgroundColor: C.sage }} />
+                  </View>
+                </View>
+              ))}
+              <Text style={{ fontSize: 11, color: C.faint, fontFamily: F.regular, marginTop: 14, lineHeight: 16 }}>
+                Yüzdeler toplam başvuruya göredir. Süreç ilerledikçe bu oranlar daha anlamlı hale gelir.
+              </Text>
+            </View>
+
+            {/* Öne çıkanlar */}
+            <SectionTitle>Öne çıkanlar</SectionTitle>
+            <View style={{ backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.border, overflow: "hidden" }}>
+              {[
+                d.metrics.topPosition ? { label: "En çok başvurduğun alan", value: `${d.metrics.topPosition.name} · ${d.metrics.topPosition.count}` } : null,
+                d.metrics.topPlatform ? { label: "En çok kullandığın platform", value: `${d.metrics.topPlatform.name} · ${d.metrics.topPlatform.count}` } : null,
+                { label: "Yanıt bekleyen", value: `${d.counts.waiting}` },
+                { label: "Bu hafta eklenen", value: `${d.metrics.weeklyCount}` },
+              ].filter(Boolean).map((row: any, i, arr) => (
+                <View key={row.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: i < arr.length - 1 ? 1 : 0, borderBottomColor: C.border }}>
+                  <Text style={{ fontSize: 14, color: C.muted, fontFamily: F.regular, flex: 1 }}>{row.label}</Text>
+                  <Text style={{ fontSize: 14, color: C.ink, fontFamily: F.medium, textAlign: "right" }}>{row.value}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
       </SafeAreaView>
     </View>
   );
