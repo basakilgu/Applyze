@@ -722,7 +722,7 @@ const handleExport = () => {
               <SettingRow
                 label="Geri bildirim gönder"
                 onPress={() => {
-                  const mail = "mailto:basak.ilgu@ozu.edu.tr?subject=Applyze%20geri%20bildirim";
+                  const mail = "mailto:support@il9u.com?subject=Applyze%20geri%20bildirim";
                   if (Platform.OS === "web") {
                     if (typeof window !== "undefined") window.location.href = mail;
                   } else {

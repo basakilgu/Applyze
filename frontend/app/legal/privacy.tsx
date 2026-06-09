@@ -8,7 +8,7 @@ import Svg, { Path } from "react-native-svg";
 
 // Bu üç değeri kendine göre düzenleyebilirsin:
 const CONTROLLER = "Applyze (Başak İlgü)";
-const CONTACT_EMAIL = "basak.ilgu@ozu.edu.tr";
+const CONTACT_EMAIL = "support@il9u.com";
 const UPDATED = "6 Haziran 2026";
 
 function BackIcon() {
