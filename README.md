@@ -1,268 +1,173 @@
 <div align="center">
 
-# Applyze
+# 🧭 Applyze — Kariyer Pusulası
 
-**Kariyer pusulası.**  
-Başvurularını sadece kayıt altına alma — yönünü gör.
+**İş başvurularını takip et, AI ile örüntüleri gör, kendi yönünü bul.**
+
+İş arayanlar için yapay zeka destekli başvuru takip ve yön bulma uygulaması.
+
+[**🌐 Canlı Uygulama → applyze.vercel.app**](https://applyze.vercel.app)
+
+`Expo (Web + Mobil)` · `Supabase` · `Google Gemini` · `TypeScript`
 
 </div>
 
-<table align="center">
-<tr>
-<td><img src="docs/screenshots/03-onboarding-pusula.jpg" width="240" /></td>
-<td><img src="docs/screenshots/05-dashboard-hero.jpg" width="240" /></td>
-<td><img src="docs/screenshots/14-profile-hero.jpg" width="240" /></td>
-</tr>
-</table>
+---
+
+## ✨ Applyze nedir?
+
+İş arama süreci dağınıktır: onlarca başvuru farklı platformlara yapılır, hangisinin ne aşamada olduğu unutulur, hangi alanda güçlü olunduğu görülmez. **Applyze**, tüm başvuruları tek yerde toplar ve yapay zekâ ile bu veriyi **anlamlı bir yön duygusuna** çevirir — bir pusula gibi.
+
+Statik bir liste değil; başvuru verini okuyup sana **nerede tıkandığını, hangi alanda güçlü olduğunu ve sıradaki adımı** söyleyen etkileşimli bir asistandır.
 
 ---
 
-## Mevcut Durum
+## 🎯 Problem & Hedef Kitle
 
-Backend (Supabase: şema, RLS, Auth, Edge Functions, cron) ayakta ve frontend'e bağlanmış durumda. Auth, başvuru CRUD, tekrar kontrolü ve günlük hareketsizlik bildirimleri canlıdır. Otomatik bilgi çekme Faz 0.2 araştırması sonrası v2'ye ertelendi (bkz. `docs/MVP_KAPSAM.md` §12).
+**Kim:** Aktif iş arayan kişiler — özellikle yeni mezunlar ve kariyer geçişi yapanlar (ilk kullanıcı kitlesi: Türkiye'deki üniversite öğrencileri/yeni mezunlar).
 
-| Katman | Durum |
-|--------|-------|
-| Tasarım sistemi (Yüz A / Yüz B + pusula sembolü) | ✅ Tamamlandı |
-| Onboarding (3 ekran), Liste, Özet, Profil ekranları | ✅ Tamamlandı (Supabase'e bağlı) |
-| Detay, başvuru ekleme, düzenleme, not ekleme akışı | ✅ Frontend hazır |
-| Aşama yönetimi ve ayarlar ekranları | ✅ Frontend hazır |
-| Milestone (Bir An) ekranı | ✅ Tamamlandı |
-| Backend (Supabase + RLS + Auth) | 🔄 Sonraki sprint |
-| Otomatik bilgi çekme | ❌ v2'ye ertelendi (Faz 0.2 — PerimeterX bot koruması) |
-| Push bildirim ve elenme analizi | 🕐 Planlanan |
+**Problem:** İş arayan biri aynı anda 30–60 başvuruyu LinkedIn, Kariyer.net, şirket siteleri gibi farklı yerlerde yürütür. Sonuç:
+- Hangi başvuru ne aşamada, kaç gündür sessiz — takip edilemez.
+- Excel'le tutmak zahmetli ve içgörü vermez.
+- "Neyi yanlış yapıyorum, hangi alanda güçlüyüm?" sorusu yanıtsız kalır.
+
+**Ne zaman zorlanır:** Başvurular biriktikçe (özellikle 10+ başvurudan sonra) süreç kontrolden çıkar ve motivasyon düşer.
 
 ---
 
-## Neden Applyze?
+## 💡 Çözüm
 
-Mevcut iş takip araçları (Huntr, Teal, Simplify) Türk platformlarını desteklemiyor. Applyze bu boşluğu üç temel farklılaştırıcıyla kapatıyor:
+> **Applyze, dağınık iş başvurularını tek panelde toplar ve yapay zekâ ile sana kişisel bir yön haritası çıkarır.**
 
-- **Yerel platform desteği** — Kariyer.net, Youthall, Anbean ve LinkedIn başvurularını tek arşivde organize et
-- **Elenme analizi** — Hangi aşamada takıldığını gösteren içgörü ekranı
-- **Gizlilik öncelikli bildirimler** — Kilit ekranında şirket adı görünmez
-
-Hedef kullanıcı: 22-27 yaş, aktif iş arayan yeni mezunlar ve çalışırken kariyer değişikliği arayan profesyoneller.
+Kullanıcıya kattığı değer: takip yükünü sıfırlar, süreçteki darboğazı görünür kılar ve "sırada ne var?" sorusuna somut cevap verir.
 
 ---
 
-## Tasarım Dili
+## 🚀 Temel Özellikler
 
-Applyze "ayna" felsefesiyle tasarlandı: kullanıcının verisini gösterir, kararı dayatmaz. İki "yüz" üzerine kuruldu:
-
-### Yüz A — Çalışma yüzeyleri
-
-Liste, detay, ayarlar gibi günlük ekranlar. Krem zemin (`#FAF8F4`), adaçayı yeşili aksanı (`#3D5A47`), Inter sans-serif. Linear ve Things 3 ilhamlı; veri yoğun ama dingin.
-
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/05-dashboard-hero.jpg" width="220" /><br/><sub>Özet</sub></td>
-<td align="center"><img src="docs/screenshots/08-list.jpg" width="220" /><br/><sub>Liste</sub></td>
-<td align="center"><img src="docs/screenshots/09-detail-trendyol.jpg" width="220" /><br/><sub>Detay</sub></td>
-</tr>
-</table>
-
-### Yüz B — Anlamlı an
-
-Onboarding ve milestone gibi atmosferik ekranlar. Koyu zemin (`#1A2622`), italic editorial başlık (Inter Light Italic), pusula sembolü, vignette glow. Linear "Flows", Tiimo, Alan'dan ilham alındı.
-
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/03-onboarding-pusula.jpg" width="220" /><br/><sub>Onboarding</sub></td>
-<td align="center"><img src="docs/screenshots/13-milestone.jpg" width="220" /><br/><sub>Bir An</sub></td>
-<td align="center"><img src="docs/screenshots/14-profile-hero.jpg" width="220" /><br/><sub>Profil</sub></td>
-</tr>
-</table>
-
-### Görsel kimlik
-
-Sembol: **pusula iğnesi** — sessiz bir araç. Kullanıcı reddedildiğinde "üzgün maskot" görmez; pusula sadece yön değiştirir. Tipografi tek aile: Inter Variable. Renk paleti: krem nötrler + adaçayı yeşili + her duruma "bilinçli olarak donuk" rozetler (özellikle red için soluk gül — psikolojik bakım).
+| Özellik | Açıklama |
+|---|---|
+| 📥 **Başvuru takibi** | Şirket, pozisyon, platform, aşama, tarih, not — tek kartta. Özel aşamalar eklenebilir. |
+| 🧭 **Pusula (AI içgörü)** | Gemini, başvuru hunisini ve dönüşüm oranlarını yorumlar; güçlü alanını, darboğazını ve sıradaki adımı söyler. |
+| 📄 **CV ↔ İlan uyum analizi (AI)** | PDF CV'yi okur, ilanla karşılaştırır, uyum skoru ve gerekçe üretir. |
+| 🔗 **İlan linkinden otomatik doldurma (AI)** | İlan metnini AI ile çözüp formu otomatik doldurur. |
+| 📊 **Yolculuğum / Eşikler** | İlk başvuru → ilk geri dönüş → ilk mülakat → ilk teklif eşikleri + huni & dönüşüm istatistikleri. |
+| 📁 **Toplu içe aktarma** | Excel/CSV ile yüzlerce başvuruyu tek seferde ekler (tekrar kontrollü). |
+| ⏰ **Hatırlatma & takip** | Sessiz kalan başvurular için takip aksiyonları. |
+| 🔐 **Giriş** | E-posta + şifre ve Google ile giriş. Verilerini indirme & hesap silme. |
 
 ---
 
-## User Flow
+## 🤖 Yapay Zekâ Mimarideki Yeri
 
-İki ana akış: yeni kullanıcı yolculuğu (tek seferlik) ve günlük kullanım döngüsü.
+Yapay zekâ uygulamanın **çekirdek mantığında** ve **sunucu katmanında** çalışır — istemcide değil:
 
-![User Flow](docs/design/applyze_user_flow_v2.svg)
+```
+Kullanıcı (Expo Web/Mobil)
+        │  giriş token'ı ile çağrı
+        ▼
+Supabase Edge Functions (Deno API katmanı)
+        │  şirket adı GÖNDERİLMEDEN, sadece sayısal teşhis
+        ▼
+Google Gemini API (2.5-flash → flash-lite yedek)
+```
 
----
-
-## Wireframe
-
-Her kritik ekran component-component dökümante edildi. Her hotspot'un design system'deki karşılığı (token, ölçü, davranış) yanda etiketli.
-
-![Wireframe](docs/design/applyze_wireframes_annotated.svg)
-
----
-
-## Ekran Turu
-
-### Açılış ve onboarding
-
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/01-splash.jpg" width="200" /><br/><sub>Splash</sub></td>
-<td align="center"><img src="docs/screenshots/02-login.jpg" width="200" /><br/><sub>Giriş</sub></td>
-<td align="center"><img src="docs/screenshots/03-onboarding-pusula.jpg" width="200" /><br/><sub>Onboarding 1</sub></td>
-<td align="center"><img src="docs/screenshots/04-onboarding-bildirim.jpg" width="200" /><br/><sub>Onboarding 3</sub></td>
-</tr>
-</table>
-
-### Özet (Dashboard)
-
-Pulse band ile günün özeti, üç metrik, yolun haritası, geri dönüş bekleyenler ve "Pusulan şunları söylüyor" akıllı öneri kartı (backend bağlandığında aktive olacak).
-
-<table>
-<tr>
-<td><img src="docs/screenshots/05-dashboard-hero.jpg" width="220" /></td>
-<td><img src="docs/screenshots/06-dashboard-pattern.jpg" width="220" /></td>
-<td><img src="docs/screenshots/07-dashboard-suggestions.jpg" width="220" /></td>
-</tr>
-</table>
-
-### Liste ve detay
-
-Başvuruları platforma, aşamaya, favorilere göre filtrele. Detay ekranında süreç timeline'ı, notlar ve ilan kaynağı.
-
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/08-list.jpg" width="200" /><br/><sub>Liste</sub></td>
-<td align="center"><img src="docs/screenshots/09-detail-trendyol.jpg" width="200" /><br/><sub>Detay (LinkedIn)</sub></td>
-<td align="center"><img src="docs/screenshots/10-detail-anbean.jpg" width="200" /><br/><sub>Detay (Anbean)</sub></td>
-</tr>
-</table>
-
-### Etkileşimler
-
-<table>
-<tr>
-<td align="center"><img src="docs/screenshots/11-note-add.jpg" width="200" /><br/><sub>Not ekle</sub></td>
-<td align="center"><img src="docs/screenshots/12-application-actions.jpg" width="200" /><br/><sub>Düzenle / Sil</sub></td>
-<td align="center"><img src="docs/screenshots/13-milestone.jpg" width="200" /><br/><sub>Bir An (mülakat)</sub></td>
-</tr>
-</table>
-
-### Profil ve ayarlar
-
-<table>
-<tr>
-<td><img src="docs/screenshots/14-profile-hero.jpg" width="220" /></td>
-<td><img src="docs/screenshots/15-profile-settings.jpg" width="220" /></td>
-</tr>
-</table>
+- **API anahtarı asla istemcide değildir** — tüm Gemini çağrıları Edge Function üzerinden yapılır.
+- **Gizlilik önceliklidir** — AI'a şirket adları/kişisel notlar gönderilmez; yalnızca oran, sayı ve alan/sektör etiketleri gider.
+- **Dayanıklılık** — önce `gemini-2.5-flash`, boş/hatalı dönerse otomatik `gemini-2.5-flash-lite`'a düşer; sonuçlar önbelleğe alınarak kota korunur.
 
 ---
 
-## Teknoloji
+## 🏗️ Mimari & Teknoloji
 
-| Katman | Teknoloji |
-|--------|-----------|
-| Mobil framework | Expo (React Native) — iOS & Android |
-| Stiller | NativeWind (Tailwind for React Native) |
-| Tipler | TypeScript (strict mode) |
-| Gezinme | Expo Router (file-based navigation) |
-| Tasarım sistemi | Inter Variable Font + design system v3 token'ları |
-| SVG ve pusula sembolü | react-native-svg |
-| Backend | Supabase (PostgreSQL + RLS + Edge Functions + Cron) |
-| Bildirimler *(planlanan)* | Expo Notifications + Supabase Cron |
-| Analitik *(planlanan)* | Amplitude |
-| Dağıtım *(planlanan)* | Expo EAS Build → App Store + Google Play |
+**Frontend (`/frontend`)** — Expo (React Native) + Expo Router, tek kod tabanından **web + mobil**. TypeScript, NativeWind. Vercel'de statik export ile yayında.
+
+**Backend (`/backend`)** — Supabase: Postgres + Row Level Security, Auth, **Edge Functions (Deno) API katmanı**, Storage (CV'ler), pg_cron. Backend platformdan bağımsız bir API'dir; bugün web'e, yarın mobil app'e aynı uçları sunar.
+
+**AI** — Google Gemini, Edge Functions üzerinden.
+
+> Detaylı gerekçeler ve AI destekli geliştirme süreci için: [`prodocs/tech-stack.md`](prodocs/tech-stack.md)
 
 ---
 
-## Çalıştırma
+## 📂 Repo Yapısı
 
-**Gereksinimler:** Node.js 18+, npm, [Expo Go](https://expo.dev/client) uygulaması (iOS veya Android telefonda).
+```
+.
+├── frontend/        # Expo (React Native) arayüz — web + mobil
+├── backend/         # Supabase: edge functions (Deno API) + migrations
+├── prodocs/         # Geliştirme referans dökümanları (PRD, Plan, tech-stack…)
+├── .gitignore
+├── README.md        # bu dosya
+└── frontend/.env.example
+```
 
+---
+
+## ⚙️ Kurulum & Çalıştırma
+
+### Gereksinimler
+- Node.js 18+, npm
+- Bir Supabase projesi (ücretsiz)
+- Google Gemini API anahtarı
+
+### 1) Frontend (yerel geliştirme)
 ```bash
-git clone https://github.com/basakilgu/Applyze.git
-cd Applyze/frontend
+cd frontend
 npm install
-cp .env.example .env   # Supabase proje URL'i ve anon anahtarını doldur
-npx expo start
+cp .env.example .env        # değerleri kendi Supabase projenle doldur
+npm run web                 # web için
+# npm run ios / npm run android   # mobil için
 ```
 
-Terminalde QR kod çıkar. Telefondaki Expo Go uygulamasıyla okuttuğunuzda uygulama açılır. Uygulama Supabase'e bağlıdır; `.env` içine Supabase proje URL'i ve anon anahtarı girilmeden açılış başarısız olur (`.env.example`'ı kopyalayıp doldurun).
+`.env` içeriği:
+```
+EXPO_PUBLIC_SUPABASE_URL=https://<proje-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+```
+
+### 2) Backend (Supabase)
+```bash
+cd backend
+supabase functions deploy --project-ref <proje-ref>
+```
+Edge Function gizli değişkenleri (Supabase → Edge Functions → Secrets):
+`GEMINI_API_KEY` (Google Gemini anahtarı).
+
+### 3) Web Deploy (Vercel)
+- Root Directory: `frontend`
+- Build Command: `npx expo export -p web`
+- Output Directory: `dist`
+- Ortam değişkenleri: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `frontend/vercel.json` derin link/yenileme 404'larını çözer (tüm rotaları SPA'ya yönlendirir).
 
 ---
 
-## Proje Yapısı
+## 🗺️ Yol Haritası
 
-```
-Applyze/
-├── docs/
-│   ├── design/                    # User flow + wireframe SVG'leri
-│   └── screenshots/               # Uygulama ekran görüntüleri
-├── frontend/                      # Expo (React Native) uygulaması
-│   ├── app/
-│   │   ├── (auth)/                # Giriş ekranı
-│   │   ├── (onboarding)/          # 3 ekranlı onboarding (Yüz B)
-│   │   ├── (tabs)/
-│   │   │   ├── index.tsx          # Liste
-│   │   │   ├── dashboard.tsx      # Özet
-│   │   │   └── profile.tsx        # Profil
-│   │   ├── application/           # Detay, yeni başvuru, düzenle
-│   │   ├── settings/              # Bildirim ve aşama ayarları
-│   │   └── milestone.tsx          # Bir An (Yüz B)
-│   ├── components/ui/             # Card, Badge, Button, CompassMark, BottomSheet, ...
-│   ├── lib/
-│   │   ├── supabase.ts            # Supabase client (.env'den okur)
-│   │   └── applications.ts        # Veri katmanı (Supabase'e bağlı)
-│   ├── types/                     # TypeScript tipleri
-│   └── tailwind.config.js         # Design system token'ları
-├── backend/                       # Supabase yapılandırması (şema, RLS, Edge Functions)
-├── MVP_KAPSAM.md                  # MVP kapsam dokümanı
-├── PRD.md                         # Ürün gereksinimleri dokümanı
-└── plan.md                        # Geliştirme planı (10 hafta)
-```
+- App Store & Play Store yayını (EAS build)
+- Push bildirimleri (uçtan uca)
+- Gemini ücretli katmana geçiş (ölçeklenince) + premium özellikler
+- Çoklu dil
 
 ---
 
-## Yol Haritası
+## 📚 Dökümanlar
 
-| Sprint | Odak | Durum |
-|--------|------|-------|
-| Sprint 0 — Tasarım | Yüz A/B sistemi, pusula sembolü, tüm ekran tasarımları | ✅ Tamamlandı |
-| Sprint 1 — Backend bağlantısı | Frontend'in Supabase'e bağlanması (auth, CRUD, demo veri) | ✅ Tamamlandı *(bu repo)* |
-| Sprint 2 — Backend | Supabase, RLS, kimlik doğrulama, başvuru CRUD | 🔄 Sonraki |
-| Sprint 4 — Bildirim ve analiz | Push bildirim (gizlilik öncelikli), elenme analizi | 🕐 Planlanan |
-| Sprint 5 — Yayına alma | App Store + Google Play | 🕐 Planlanan |
-
-Detaylar için [`plan.md`](plan.md), [`MVP_KAPSAM.md`](MVP_KAPSAM.md) ve [`PRD.md`](PRD.md).
-
----
-
-## Belgeler
-
-- [`MVP_KAPSAM.md`](MVP_KAPSAM.md) — Ürün vizyonu, pazar analizi, MVP kapsamı, persona ve metrikler
-- [`PRD.md`](PRD.md) — Ürün gereksinimleri, fonksiyonel ve fonksiyonel olmayan gereksinimler, veri modeli
-- [`plan.md`](plan.md) — 10 haftalık geliştirme planı, sprint sprint görev listesi
-
----
-
-## Katkı
-
-Bu proje şu an tek geliştirici tarafından yürütülmektedir. Hata bildirimleri ve öneriler için [Issues](https://github.com/basakilgu/Applyze/issues) bölümünü kullanabilirsiniz.
-
-### Dal Stratejisi
-
-```
-main        → kararlı, yayına hazır kod
-develop     → aktif geliştirme
-feature/*   → yeni özellikler
-```
-
----
-
-## Lisans
-
-MIT
+| Doküman | İçerik |
+|---|---|
+| [`prodocs/PRD.md`](prodocs/PRD.md) | Ürün gereksinimleri — problem, kullanıcı, özellikler |
+| [`prodocs/Plan.md`](prodocs/Plan.md) | Kullanıcı hikâyelerine bölünmüş teknik plan |
+| [`prodocs/tech-stack.md`](prodocs/tech-stack.md) | Teknolojiler, seçim gerekçeleri, AI destekli geliştirme |
+| [`prodocs/DesignSystem.md`](prodocs/DesignSystem.md) | Renk paleti, tipografi, component kuralları |
+| [`prodocs/Progress.md`](prodocs/Progress.md) | Kararlar, kilometre taşları ve hata/çözüm günlüğü |
 
 ---
 
 <div align="center">
 
-*Applyze — Kariyer pusulası. v1.0 — Tasarım demosu.*
+**Applyze** — *Sadece bir takipçi değil. Bir pusula.* 🧭
+
+Future Talent 2026 · Yapay Zeka ile Ürün Geliştirme Bitirme Projesi
 
 </div>
