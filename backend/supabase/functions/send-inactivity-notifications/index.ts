@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Aday sorgusu başarısız", detail: queryError }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -160,7 +160,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       },
     );
   } catch (err) {
@@ -170,7 +170,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Sunucu hatası", detail: msg }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       },
     );
   }

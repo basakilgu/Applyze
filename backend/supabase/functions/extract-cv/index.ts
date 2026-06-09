@@ -16,24 +16,24 @@ Deno.serve(async (req: Request) => {
   const preflight = handleCorsPreflight(req);
   if (preflight) return preflight;
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Sadece POST." }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Sadece POST." }), { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   }
   try {
     const { fileBase64, mimeType } = await req.json();
     if (!fileBase64 || typeof fileBase64 !== "string") {
-      return new Response(JSON.stringify({ error: "Dosya verisi gerekli." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Dosya verisi gerekli." }), { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
     const mt = typeof mimeType === "string" ? mimeType : "application/pdf";
     if (!ALLOWED.includes(mt)) {
-      return new Response(JSON.stringify({ error: "Desteklenmeyen dosya türü. PDF veya görsel yükle." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Desteklenmeyen dosya türü. PDF veya görsel yükle." }), { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
     if (fileBase64.length > 9_000_000) {
-      return new Response(JSON.stringify({ error: "Dosya çok büyük (en fazla ~6 MB)." }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Dosya çok büyük (en fazla ~6 MB)." }), { status: 413, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Authorization header eksik." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Authorization header eksik." }), { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
     );
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Geçersiz token." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Geçersiz token." }), { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");
@@ -65,16 +65,16 @@ Deno.serve(async (req: Request) => {
     if (!resp.ok) {
       const t = await resp.text();
       console.error("Gemini hatası:", resp.status, t);
-      return new Response(JSON.stringify({ error: "Dosya okunamadı." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Dosya okunamadı." }), { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
     const data = await resp.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text || text.trim().length < 10) {
-      return new Response(JSON.stringify({ error: "Dosyadan metin çıkarılamadı." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Dosyadan metin çıkarılamadı." }), { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
-    return new Response(JSON.stringify({ text: text.trim() }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ text: text.trim() }), { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   } catch (err) {
     console.error("Beklenmeyen hata:", err);
-    return new Response(JSON.stringify({ error: "Sunucu hatası." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Sunucu hatası." }), { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   }
 });

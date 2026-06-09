@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Sadece POST isteği kabul edilir." }),
       {
         status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       },
     );
   }
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "source_url alanı gerekli." }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Authorization header eksik." }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Geçersiz token." }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Veritabanı sorgusu başarısız." }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -134,7 +134,7 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ is_duplicate: false }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       },
     );
   } catch (err) {
@@ -152,7 +152,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Sunucu hatası." }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       },
     );
   }
