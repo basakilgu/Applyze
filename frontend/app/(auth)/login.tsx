@@ -66,6 +66,11 @@ function mapAuthError(raw: string): string {
   return raw;
 }
 
+// Basit e-posta format kontrolu (anlik, sunucuya gitmeden geri bildirim)
+function isValidEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+}
+
 type Mode = "select" | "email-login" | "email-signup" | "forgot";
 
 export default function LoginScreen() {
@@ -115,6 +120,10 @@ export default function LoginScreen() {
       setError("E-posta ve şifre gerekli.");
       return;
     }
+    if (!isValidEmail(email)) {
+      setError("Geçerli bir e-posta adresi gir.");
+      return;
+    }
     setLoading(true);
     resetMessages();
 
@@ -135,6 +144,10 @@ export default function LoginScreen() {
   const handleEmailSignup = async () => {
     if (!email.trim() || !password) {
       setError("E-posta ve şifre gerekli.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("Geçerli bir e-posta adresi gir.");
       return;
     }
     if (password.length < 6) {
@@ -166,6 +179,11 @@ export default function LoginScreen() {
     if (data.session) {
       // Otomatik giris yapildi (Confirm email kapali) -> auth layout yonlendirir
       setLoading(false);
+    } else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      // E-posta ZATEN kayitli (onaylanmis). Supabase guvenlik nedeniyle hata dondurmez;
+      // bos "identities" dizisi bunu ele verir. Kullaniciyi dogru yone yonlendir.
+      setError("Bu e-posta ile zaten bir hesabın var. Giriş yap ya da 'Şifremi unuttum' ile sıfırla.");
+      setLoading(false);
     } else {
       // Confirm email acik kalmissa: dogrulama bekleniyor
       setInfo("Hesabın oluşturuldu. E-postandaki doğrulama bağlantısına tıkla, sonra giriş yap.");
@@ -176,6 +194,10 @@ export default function LoginScreen() {
   const handleForgot = async () => {
     if (!email.trim()) {
       setError("Önce e-posta adresini gir.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("Geçerli bir e-posta adresi gir.");
       return;
     }
     setLoading(true);

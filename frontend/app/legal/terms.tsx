@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path } from "react-native-svg";
 
-const CONTACT_EMAIL = "basak.ilgu@ozu.edu.tr";
+const CONTACT_EMAIL = "support@il9u.com";
 const UPDATED = "6 Haziran 2026";
 
 function BackIcon() {
