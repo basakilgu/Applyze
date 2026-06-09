@@ -43,6 +43,22 @@ Kullanıcıya kattığı değer: takip yükünü sıfırlar, süreçteki darboğ
 
 ---
 
+## 📸 Ekran Görüntüleri
+
+<p align="center">
+  <img src="docs/screenshots/02-login.jpg" width="220" alt="Giriş" />
+  <img src="docs/screenshots/05-dashboard-hero.jpg" width="220" alt="Özet" />
+  <img src="docs/screenshots/07-dashboard-suggestions.jpg" width="220" alt="AI önerileri" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/08-list.jpg" width="220" alt="Liste" />
+  <img src="docs/screenshots/09-detail-trendyol.jpg" width="220" alt="Başvuru detayı" />
+  <img src="docs/screenshots/15-profile-settings.jpg" width="220" alt="Profil" />
+</p>
+<p align="center"><em>Giriş · Özet (Pusula) · AI önerileri · Liste · Başvuru detayı · Profil</em></p>
+
+---
+
 ## 🚀 Temel Özellikler
 
 | Özellik | Açıklama |
