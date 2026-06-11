@@ -4,13 +4,28 @@ Yapılan işlerin, alınan kararların ve karşılaşılan hataların kaydı. Ye
 
 ---
 
+## Faz 4 — Platform Yönü Kararı & Doküman Hizalama (Haziran 2026)
+
+### Karar: Web MVP, Mobil v2
+- **Karar:** Proje başlangıçta **mobil-öncelikli** (iOS/Android, App Store/Play Store) tasarlandı. Geliştirme ilerledikçe, bitirme teslimi için **web deploy'un yeterli olması** ve odağı dağıtmamak adına **MVP web olarak** geliştirilip canlıya alındı. **Mobil yayın bilinçli olarak v2'ye ertelendi.**
+- **Gerekçe:** (1) Brief web deploy'u yeterli görüyor. (2) Apple Developer ($99/yıl) + mağaza inceleme süreçleri 8 haftalık takvimde risk/odak kaybı yaratıyordu. (3) Expo tek kod tabanı sayesinde mobil yayın v2'de düşük maliyetle açık kalıyor — kod tabanı mobile hazır.
+- **Etki:** Push bildirim, native sürükle-bırak/dokunsal geri bildirim ve mağaza adımları v2 kapsamına alındı. Web'de bunların yerine in-app hatırlatma ve seçim/alt sayfa ile aşama güncelleme kullanılıyor.
+
+### Doküman hizalama (tutarlılık)
+- **PRD → v2.1:** Kapsam tablosu güncellendi (web MVP / mobil v2); AI özellikleri (Pusula, CV uyumu, ilan→form) çekirdek kapsama yazıldı (önceki sürümde AI "kapsam dışı" görünüyordu — düzeltildi); bildirim ve mağaza gereksinimleri "📱 mobil v2" etiketlendi; teknik mimariye Gemini + Vercel eklendi.
+- **Plan → v1.3:** Platform satırı web-MVP olarak güncellendi; Faz 6 ikiye ayrıldı: **Faz 6-Web (tamamlandı)** ve **Faz 6-Mobil (📱 v2)**; tamamlanan AI/web görevleri işaretlendi.
+- **tech-stack:** Mobilin v2 olduğu açıkça belirtildi (zaten web-öncelikli yazılmıştı).
+- **DesignSystem:** Zaten web-uyumlu ("web'de tam genişlik"); değişiklik gerekmedi.
+
+---
+
 ## Faz 3 — Yayın & Sertleştirme (Haziran 2026)
 
 Uygulamayı gerçek anlamda **canlıya almak** ve teslime hazırlamak.
 
 ### Yayın (deploy)
 - **Web canlıya alındı:** Vercel'e bağlandı (Root: `frontend`, Build: `npx expo export -p web`, Output: `dist`). Canlı: **applyze.vercel.app**.
-- **Karar:** Mobil (App/Play Store) yayın sonraya bırakıldı; brief web deploy'u yeterli görüyor, mobil yol haritasında.
+- **Karar:** Mobil (App/Play Store) yayın sonraya bırakıldı; brief web deploy'u yeterli görüyor, mobil yol haritasında (bkz. Faz 4 platform kararı).
 
 ### Çözülen hatalar (bu fazda)
 - **Derin link 404 (Vercel):** `/login` gibi rotalar doğrudan açılınca/yenilenince 404 veriyordu. → `frontend/vercel.json` ile tüm rotalar `index.html`'e yönlendirildi (SPA fallback). Çözüldü.
@@ -57,3 +72,4 @@ Uygulamayı gerçek anlamda **canlıya almak** ve teslime hazırlamak.
 - Önce gerçek üretim ortamında test etmek (gizli pencere, canlı URL) hayalet hataları (önbellek) ayıklamayı kolaylaştırdı.
 - Ücretsiz katman sınırları (Gemini kota, Supabase mail) erken fark edilip mimariye (önbellek, custom SMTP) yansıtıldı.
 - Güvenlik kararları (CORS, token-auth, gizli anahtar yönetimi) "yapılmış olsun" değil, gerçek risk üzerinden verildi.
+- Kapsam yönetimi: Mobili v2'ye ertelemek, 8 haftada çalışan ve sağlam bir web MVP'yi bitirmeye odaklanmayı sağladı — Expo sayesinde mobil kapısı açık kaldı.

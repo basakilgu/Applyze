@@ -2,6 +2,8 @@
 
 Bu doküman; kullanılan teknolojileri, **neden** seçildiklerini ve geliştirme sürecinde **yapay zekânın nasıl kullanıldığını** anlatır.
 
+> ⚙️ **Platform:** MVP **web** olarak canlıdadır (applyze.vercel.app). Kod tabanı (Expo/React Native) tek çatıdan web + mobili hedefler; **mobil (iOS/Android) mağaza yayını v2'ye ertelenmiştir.** Bu doküman mevcut web teslimini esas alır.
+
 ---
 
 ## 1. Mimari Genel Bakış
@@ -10,7 +12,7 @@ Applyze, frontend ve backend'i birbirinden tamamen ayrılmış bir uygulamadır.
 
 ```
 ┌─────────────────────────────┐
-│  Frontend — Expo (RN)        │   Web (Vercel) + Mobil (aynı kod tabanı)
+│  Frontend — Expo (RN)        │   Web (Vercel, MVP) + Mobil (v2, aynı kod tabanı)
 │  Expo Router · TypeScript     │
 └───────────────┬─────────────┘
                 │ HTTPS + giriş token'ı (Bearer)
@@ -36,16 +38,18 @@ Applyze, frontend ve backend'i birbirinden tamamen ayrılmış bir uygulamadır.
 
 | Teknoloji | Sürüm | Neden seçildi |
 |---|---|---|
-| **Expo (React Native)** | SDK 54 / RN 0.81 / React 19 | Tek kod tabanından hem **web** hem **iOS/Android**. Bitirme için web yeterli ama mobil yol haritası açık kalsın istedik. |
+| **Expo (React Native)** | SDK 54 / RN 0.81 / React 19 | Tek kod tabanından hem **web (MVP)** hem **iOS/Android (v2)**. Bitirme için web yeterli; mobil yol haritası tek komutla açık kalsın istedik. |
 | **Expo Router** | 6 | Dosya tabanlı yönlendirme + `typedRoutes` ile tip güvenliği. |
 | **TypeScript** | 5 | Tip güvenliği; AI ile üretilen kodun hatalarını derleme anında yakalamak. |
 | **NativeWind + Tailwind** | 4 / 3.4 | Tutarlı, hızlı stillendirme; tasarım sistemini kolay uygulamak. |
 | **react-native-svg** | 15 | Pusula ikonu ve huni/illüstrasyonlar. |
 | **expo-document-picker + xlsx** | — | CV (PDF) yükleme ve Excel/CSV toplu içe aktarma. |
-| **expo-secure-store** | — | Onboarding bayrağı gibi küçük yerel durum (native); web'de localStorage. |
+| **expo-secure-store** | — | Küçük yerel durum (native); web'de localStorage. |
 | **expo-web-browser / expo-linking** | — | Google OAuth ve harici linkler. |
 
-**Deploy:** Vercel — `npx expo export -p web` ile statik export, `dist` yayınlanır. Her `main` merge'i otomatik canlıya çıkar. Derin link/yenileme 404'ları `frontend/vercel.json` ile çözüldü (tüm rotalar `index.html`'e yönlendirilir).
+**Deploy (web — MVP):** Vercel — `npx expo export -p web` ile statik export, `dist` yayınlanır. Her `main` merge'i otomatik canlıya çıkar. Derin link/yenileme 404'ları `frontend/vercel.json` ile çözüldü (tüm rotalar `index.html`'e yönlendirilir).
+
+**Deploy (mobil — v2):** Expo EAS Build → App Store + Google Play. Kod tabanı hazır; mağaza süreçleri v2 kapsamında.
 
 ---
 
@@ -59,7 +63,7 @@ Applyze, frontend ve backend'i birbirinden tamamen ayrılmış bir uygulamadır.
 | **Auth** | E-posta + şifre ve **Google OAuth**. Üretim e-postaları için **custom SMTP**. |
 | **Edge Functions (Deno/TypeScript)** | API katmanı: AI çağrıları + hesap silme + cron. İstemci asla doğrudan Gemini'ye gitmez. |
 | **Storage** | CV PDF'leri (özel bucket + RLS). |
-| **pg_cron** | Uzun süre sessiz kalan başvurular için bildirim adayı sorgusu. |
+| **pg_cron** | Uzun süre sessiz kalan başvurular için bildirim adayı sorgusu (push gönderimi mobil v2). |
 
 **Edge Functions:** `ai-suggestions` (Pusula), `analyze-fit` (CV↔ilan uyumu), `parse-job` (ilan→form), `extract-cv` (PDF metin), `delete-account`, `send-inactivity-notifications` (cron), `check-duplicate`.
 
@@ -109,9 +113,9 @@ Applyze, baştan sona **AI destekli bir geliştirme akışıyla** üretildi. AI 
   - **CORS** sertleştirme + Supabase CLI ile fonksiyon deploy.
   - Kayıt akışında "zaten hesabın var" durumunun yakalanması (Supabase'in `identities` davranışı).
   - Custom SMTP (domain + Resend + DNS) kurulumu.
-- **Karar verme:** Ücretsiz katman mı/faturalandırma mı, hangi domain stratejisi, CORS'un gerçek risk değeri gibi konularda seçenekler AI ile tartışılıp **bilinçli** kararlar verildi.
+- **Karar verme:** Ücretsiz katman mı/faturalandırma mı, hangi domain stratejisi, **mobil yayını v2'ye erteleme** ve CORS'un gerçek risk değeri gibi konularda seçenekler AI ile tartışılıp **bilinçli** kararlar verildi.
 
-**AI destekli geliştirici olarak yaklaşım:** AI'ın ürettiği her çıktı körlemesine kabul edilmedi; tip kontrolü, test ve gerçek cihazda doğrulama ile süzüldü. Karar her zaman geliştiricide kaldı; AI hızı ve kapsamı artırdı.
+**AI destekli geliştirici olarak yaklaşım:** AI'ın ürettiği her çıktı körlemesine kabul edilmedi; tip kontrolü, test ve gerçek ortamda doğrulama ile süzüldü. Karar her zaman geliştiricide kaldı; AI hızı ve kapsamı artırdı.
 
 ---
 
@@ -122,5 +126,5 @@ Applyze, baştan sona **AI destekli bir geliştirme akışıyla** üretildi. AI 
 | Frontend | Expo (RN) · Expo Router · TypeScript · NativeWind |
 | Backend | Supabase (Postgres + RLS · Auth · Edge Functions/Deno · Storage · pg_cron) |
 | AI | Google Gemini 2.5-flash / flash-lite |
-| Deploy | Vercel (web) · Supabase CLI (functions) |
+| Deploy | Vercel (web — MVP) · Supabase CLI (functions) · EAS (mobil — v2) |
 | Altyapı | Cloudflare (domain/DNS/email routing) · Resend (SMTP) |
