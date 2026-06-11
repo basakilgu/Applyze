@@ -8,7 +8,7 @@
 
 [**🌐 Canlı Uygulama → applyze.vercel.app**](https://applyze.vercel.app)
 
-`Expo (Web + Mobil)` · `Supabase` · `Google Gemini` · `TypeScript`
+`Expo (Web — MVP · Mobil v2)` · `Supabase` · `Google Gemini` · `TypeScript`
 
 </div>
 
@@ -19,6 +19,8 @@
 İş arama süreci dağınıktır: onlarca başvuru farklı platformlara yapılır, hangisinin ne aşamada olduğu unutulur, hangi alanda güçlü olunduğu görülmez. **Applyze**, tüm başvuruları tek yerde toplar ve yapay zekâ ile bu veriyi **anlamlı bir yön duygusuna** çevirir — bir pusula gibi.
 
 Statik bir liste değil; başvuru verini okuyup sana **nerede tıkandığını, hangi alanda güçlü olduğunu ve sıradaki adımı** söyleyen etkileşimli bir asistandır.
+
+> **Platform:** MVP **web** olarak canlıdadır. Kod tabanı (Expo) tek çatıdan web + mobili hedefler; **mobil (iOS/Android) yayını v2'ye ertelenmiştir** (bkz. Yol Haritası).
 
 ---
 
@@ -96,7 +98,7 @@ Google Gemini API (2.5-flash → flash-lite yedek)
 
 ## 🏗️ Mimari & Teknoloji
 
-**Frontend (`/frontend`)** — Expo (React Native) + Expo Router, tek kod tabanından **web + mobil**. TypeScript, NativeWind. Vercel'de statik export ile yayında.
+**Frontend (`/frontend`)** — Expo (React Native) + Expo Router, tek kod tabanından **web (MVP) + mobil (v2)**. TypeScript, NativeWind. Web, Vercel'de statik export ile yayında.
 
 **Backend (`/backend`)** — Supabase: Postgres + Row Level Security, Auth, **Edge Functions (Deno) API katmanı**, Storage (CV'ler), pg_cron. Backend platformdan bağımsız bir API'dir; bugün web'e, yarın mobil app'e aynı uçları sunar.
 
@@ -110,12 +112,20 @@ Google Gemini API (2.5-flash → flash-lite yedek)
 
 ```
 .
-├── frontend/        # Expo (React Native) arayüz — web + mobil
-├── backend/         # Supabase: edge functions (Deno API) + migrations
-├── prodocs/         # Geliştirme referans dökümanları (PRD, Plan, tech-stack…)
-├── .gitignore
-├── README.md        # bu dosya
-└── frontend/.env.example
+├── frontend/              # Expo (React Native) arayüz — web + mobil
+│   └── .env.example       # örnek env şablonu (gerçek anahtar yok)
+├── backend/               # Supabase: edge functions (Deno API) + migrations
+│   └── .env.example       # Edge Function gizli değişken şablonu (Supabase Secrets'a girilir)
+├── prodocs/               # Geliştirme referans dökümanları
+│   ├── PRD.md             # ürün gereksinimleri
+│   ├── Plan.md            # teknik plan (kullanıcı hikâyeleri)
+│   ├── tech-stack.md      # teknolojiler + AI kullanımı
+│   ├── DesignSystem.md    # renk / tipografi / component kuralları
+│   └── Progress.md        # karar & hata günlüğü
+├── docs/screenshots/      # README görselleri
+├── .gitignore             # node_modules, .env, dist, ios/android… hariç
+├── LICENSE                # MIT
+└── README.md              # bu dosya
 ```
 
 ---
@@ -133,7 +143,7 @@ cd frontend
 npm install
 cp .env.example .env        # değerleri kendi Supabase projenle doldur
 npm run web                 # web için
-# npm run ios / npm run android   # mobil için
+# npm run ios / npm run android   # mobil için (v2 yol haritası)
 ```
 
 `.env` içeriği:
@@ -148,7 +158,7 @@ cd backend
 supabase functions deploy --project-ref <proje-ref>
 ```
 Edge Function gizli değişkenleri (Supabase → Edge Functions → Secrets):
-`GEMINI_API_KEY` (Google Gemini anahtarı).
+`GEMINI_API_KEY` (Google Gemini anahtarı). Şablon: [`backend/.env.example`](backend/.env.example).
 
 ### 3) Web Deploy (Vercel)
 - Root Directory: `frontend`
@@ -159,12 +169,15 @@ Edge Function gizli değişkenleri (Supabase → Edge Functions → Secrets):
 
 ---
 
-## 🗺️ Yol Haritası
+## 🗺️ Yol Haritası (v2)
 
-- App Store & Play Store yayını (EAS build)
-- Push bildirimleri (uçtan uca)
-- Gemini ücretli katmana geçiş (ölçeklenince) + premium özellikler
-- Çoklu dil
+Mevcut sürüm **web MVP**'dir; aşağıdakiler bilinçli olarak **v2'ye ertelenmiştir** (kod tabanı buna hazır tutulmuştur):
+
+- **Mobil yayın (iOS/Android)** — App Store & Play Store, EAS build
+- **Push bildirimleri** — uçtan uca, gizlilik öncelikli (kilit ekranında şirket adı görünmez)
+- **İlan linkinden otomatik bilgi çekme** — proxy servisi veya resmi API ile
+- **Gemini ücretli katman** — ölçeklenince + premium özellikler
+- **Çoklu dil**
 
 ---
 
