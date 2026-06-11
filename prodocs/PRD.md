@@ -1,11 +1,13 @@
 # Applyze — Ürün Gereksinimleri Dokümanı (PRD)
 
-**Versiyon:** v2.0  
-**Durum:** Taslak  
-**Tarih:** Nisan 2026  
-**Ürün:** Applyze  
+**Versiyon:** v2.1
+**Durum:** Taslak
+**Tarih:** Haziran 2026
+**Ürün:** Applyze
 
 > Bu doküman geliştirici referansıdır. Ürünün ne olduğu, neden yapıldığı ve pazara çıkış stratejisi için bkz. MVP Kapsam Dokümanı v2.0.
+
+> ⚙️ **Platform yönü (v2.1):** MVP **web uygulaması** olarak geliştirilip canlıya alınmıştır (applyze.vercel.app). **Mobil (iOS/Android)** yayını bilinçli olarak **v2'ye ertelenmiştir** — kod tabanı (Expo/React Native) mobil yayını tek komutla mümkün kılacak şekilde korunmuştur. Bu dokümanda mobil-özel (push bildirim, App Store/Play Store, native dokunsal geri bildirim) olarak işaretlenen gereksinimler v2 kapsamındadır; web MVP'sinde yer almaz.
 
 ---
 
@@ -37,6 +39,7 @@
 | v0.3 | Nisan 2026 | Fonksiyonel olmayan gereksinimler, tasarım gereksinimleri, veri modeli |
 | v1.0 | Nisan 2026 | İlk tam versiyon |
 | v2.0 | Nisan 2026 | Doküman ayrımı refactor, metrik etiketleme, persona güncelleme, silme kararı, oto doldur risk planı, elenme analizi cold start çözümü |
+| v2.1 | Haziran 2026 | **Platform yönü güncellendi:** MVP web olarak canlıya alındı, mobil (iOS/Android) v2'ye ertelendi. **AI özellikleri** (Pusula içgörü, CV↔ilan uyum analizi, ilan→form otomatik doldurma) çekirdek kapsama eklendi. Bildirim ve App Store/Play Store gereksinimleri "mobil v2" olarak etiketlendi. |
 
 ---
 
@@ -44,15 +47,15 @@
 
 ### Ürün Tanımı
 
-Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden fazla platformdaki iş başvurularını tek bir mobil uygulamada takip etmelerini, süreçlerini yönetmelerini ve kariyer verilerini analiz etmelerini sağlayan iOS ve Android uygulamasıdır.
+Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden fazla platformdaki iş başvurularını tek bir uygulamada takip etmelerini, süreçlerini yönetmelerini ve kariyer verilerini **yapay zekâ ile** analiz etmelerini sağlayan bir uygulamadır. MVP **web** olarak yayındadır; kod tabanı (Expo/React Native) aynı zamanda iOS ve Android'i hedefleyecek şekilde tek çatıda tutulmuştur (mobil yayın v2).
 
 ### Kapsam
 
 | | |
 |--|--|
-| **Kapsam İÇİ** | Manuel başvuru ekleme, aşama takibi (görsel tahta), arşiv, gösterge paneli, elenme analizi, bildirimler, tekrarlayan başvuru uyarısı, özelleştirilebilir aşamalar, başvuru detayı, başvuru silme |
-| **Kapsam DIŞI** | Tüm platformlar için otomatik bilgi çekme (Faz 0.2 sonrası v2'ye ertelendi), ilan toplama, sosyal özellikler, CV oluşturucu, web uygulaması, yapay zeka tavsiyesi, seri sistemi |
-| **Platform** | iOS 16+ ve Android 10+ |
+| **Kapsam İÇİ** | Manuel başvuru ekleme, aşama takibi, arşiv/liste, özelleştirilebilir aşamalar, başvuru detayı + aşama geçmişi, notlar, başvuru silme, gösterge paneli (özet), **AI Pusula (içgörü)**, **CV ↔ ilan uyum analizi (AI)**, **ilan linkinden otomatik form doldurma (AI)**, **Excel/CSV toplu içe aktarma**, veri dışa aktarma, hesap silme |
+| **Kapsam DIŞI** | **Mobil (iOS/Android) yayını → v2**, **push bildirim → mobil v2**, tüm platformlar için otomatik bilgi çekme/scraping (Faz 0.2 sonrası v2'ye ertelendi), ilan toplama, sosyal özellikler, CV oluşturucu, AI ilan *tavsiye/öneri motoru* (içgörü ≠ tavsiye motoru), seri sistemi |
+| **Platform** | **Web (canlı, MVP) — applyze.vercel.app** · Mobil iOS 16+ / Android 10+ **v2'ye ertelendi** |
 | **Dil** | Türkçe (v1) |
 | **Monetizasyon** | v1'de tamamen ücretsiz |
 
@@ -69,7 +72,7 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 | **İsim** | Mehmet Kaya, 22 yaş, Ankara |
 | **Meslek** | İşletme mezunu, ilk işini arıyor |
 | **Durum** | Tam zamanlı iş arama |
-| **Teknoloji** | Android kullanıcısı |
+| **Teknoloji** | Web + Android kullanıcısı |
 | **Platformlar** | Youthall ağırlıklı, LinkedIn, Kariyer.net |
 | **Başvuru hacmi** | Haftada 20-30 başvuru |
 | **Mevcut araç** | Google Sheets (artık yönetilemez durumda) |
@@ -88,7 +91,7 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 | **İsim** | Ayşe Yılmaz, 23 yaş, İstanbul |
 | **Meslek** | Süreç Tasarım Uzmanı, tam zamanlı çalışıyor |
 | **Durum** | Çalışırken kariyer değişikliği arıyor |
-| **Teknoloji** | iPhone kullanıcısı |
+| **Teknoloji** | Web (masaüstü) + iPhone kullanıcısı |
 | **Platformlar** | LinkedIn, Kariyer.net, Youthall, Anbean |
 | **Başvuru hacmi** | Haftada 5-10 başvuru (seçici) |
 | **Mevcut araç** | Notes + Excel |
@@ -98,7 +101,7 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 | Motivasyon | Daha iyi kariyer fırsatı, liderlik programları. |
 | Hedef | Stratejiyle iş aramak. Hangi aşamada elendiğini anlamak. |
 | Engeller | Sınırlı zaman, patronun fark etme korkusu. |
-| Tasarım önceliği | Gizlilik öncelikli bildirimler, analiz ekranı. |
+| Tasarım önceliği | Gizlilik öncelikli görünüm, analiz ekranı. |
 
 ### Persona Karşılaştırması
 
@@ -120,6 +123,8 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 > - **Olsa İyi** — Zaman ve kaynak varsa.
 > - **Olmayacak** — Bu sürümde kesinlikle hayır.
 
+> 📱 **v2 (mobil) etiketi:** Push bildirim epiği (EP-08) ve sürükle-bırak/dokunsal geri bildirime dayalı native etkileşimler mobil v2 kapsamındadır. Web MVP'de bunların yerine web-uyumlu eşdeğerleri (liste/aşama güncelleme, in-app hatırlatma) kullanılır.
+
 ### EP-01: Kimlik Doğrulama ve Kullanıcı Yönetimi
 
 | Özellik ID | Özellik Adı | Öncelik | Sprint |
@@ -139,22 +144,23 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 | F-11 | Başvuru düzenleme | Olmazsa Olmaz | S1 |
 | F-12 | Başvuru silme (onay dialogu + yumuşak silme) | Olmalı | S2 |
 | F-13 | Tekrarlayan başvuru uyarısı | Olmalı | S3 |
+| F-40 | Excel/CSV toplu içe aktarma | Olmalı | S2 |
 
 ### EP-03: Aşama Yönetimi
 
 | Özellik ID | Özellik Adı | Öncelik | Sprint |
 |-----------|------------|---------|--------|
 | F-14 | Varsayılan aşamalar | Olmazsa Olmaz | S1 |
-| F-15 | Aşama değiştirme (sürükle-bırak ve alt sayfa) | Olmazsa Olmaz | S1 |
+| F-15 | Aşama değiştirme (alt sayfa / liste) | Olmazsa Olmaz | S1 |
 | F-16 | Özelleştirilebilir aşamalar (ekle/sil/yeniden adlandır) | Olmalı | S2 |
 | F-17 | Aşama geçmişi kaydı | Olmalı | S2 |
 
-### EP-04: Görsel Takip Tahtası
+### EP-04: Görsel Takip (Web: Liste/Aşama Görünümü)
 
 | Özellik ID | Özellik Adı | Öncelik | Sprint |
 |-----------|------------|---------|--------|
-| F-18 | Sütun tabanlı görsel takip | Olmazsa Olmaz | S1 |
-| F-19 | Sürükle-bırak ile aşama güncelleme | Olmazsa Olmaz | S1 |
+| F-18 | Aşama bazlı görünüm | Olmazsa Olmaz | S1 |
+| F-19 | Aşama güncelleme (alt sayfa/seçim) · sürükle-bırak → mobil v2 | Olmazsa Olmaz | S1 |
 | F-20 | Kart üzerinde özet bilgi | Olmazsa Olmaz | S1 |
 | F-21 | Platform renk kodu | Olmalı | S1 |
 
@@ -177,22 +183,27 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 | F-29 | İletişim kişisi bilgisi | Olsa İyi | S2 |
 | F-30 | İlan bağlantısına gitme | Olmalı | S2 |
 
-### EP-07: Gösterge Paneli ve Analiz
+### EP-07: Gösterge Paneli ve Analiz (AI Pusula)
 
 | Özellik ID | Özellik Adı | Öncelik | Sprint |
 |-----------|------------|---------|--------|
 | F-31 | Metrik kartları (toplam, bekleyen, mülakat, teklif) | Olmalı | S2 |
 | F-32 | Aşama dağılımı grafiği | Olmalı | S2 |
-| F-33 | Elenme analizi ekranı (aşamalı açılım) | Olmalı | S3 |
+| F-33 | Elenme analizi / Yolculuğum ekranı (aşamalı açılım) | Olmalı | S3 |
 | F-34 | Platform bazlı başarı oranı | Olsa İyi | S3 |
+| F-38 | **AI Pusula — içgörü/öneri (Gemini)** | Olmazsa Olmaz | S3 |
+| F-39 | **CV ↔ ilan uyum analizi (AI)** | Olmalı | S3 |
+| F-41 | **İlan linkinden otomatik form doldurma (AI)** | Olmalı | S2 |
 
-### EP-08: Bildirimler
+### EP-08: Bildirimler — 📱 Mobil v2
+
+> Push bildirim altyapısı mobil v2 kapsamındadır. Web MVP'de uzun süre sessiz kalan başvurular için uygulama içi (in-app) görsel hatırlatma kullanılır; kilit ekranı/push gizliliği gereksinimleri mobil sürümde devreye girer.
 
 | Özellik ID | Özellik Adı | Öncelik | Sprint |
 |-----------|------------|---------|--------|
-| F-35 | Hareketsizlik bildirimi (14 gün) | Olmalı | S3 |
-| F-36 | Bildirim gizliliği (kilit ekranında şirket adı yok) | Olmazsa Olmaz | S3 |
-| F-37 | Bildirim ayarları (açma/kapama, saat aralığı) | Olmalı | S3 |
+| F-35 | Hareketsizlik bildirimi (14 gün) | Olmalı | v2 |
+| F-36 | Bildirim gizliliği (kilit ekranında şirket adı yok) | Olmazsa Olmaz (mobil) | v2 |
+| F-37 | Bildirim ayarları (açma/kapama, saat aralığı) | Olmalı | v2 |
 
 ---
 
@@ -202,12 +213,14 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 
 - Kullanıcı email + şifre veya Google OAuth ile kayıt olabilmeli
 - Oturum 30 gün geçerli, yenileme token'ı ile uzatılabilir
-- Şifre sıfırlama email ile gerçekleşir
+- Şifre sıfırlama email ile gerçekleşir (custom SMTP — Resend)
 - Hesap silindiğinde tüm kullanıcı verisi 30 gün yumuşak silme sonrası kalıcı olarak silinir
 
-### FR-02: Otomatik Bilgi Çekme — KAPSAM DIŞI (v2)
+### FR-02: Otomatik Bilgi Çekme (Scraping) — KAPSAM DIŞI (v2)
 
 > Faz 0.2 araştırması (Mayıs 2026): Kariyer.net'in PerimeterX bot koruması Supabase Edge Function IP'lerini HTTP 403 ile engelliyor. Kırmızı senaryo gerçekleşti. Özellik MVP'den çıkarıldı, v2'de proxy servisi veya resmi API ile yeniden değerlendirilecek. Tüm platformlar için manuel ekleme akışı kullanılır.
+>
+> **Not:** Bunun yerine MVP'de **ilan metnini/linkini AI ile çözümleyip formu otomatik dolduran** akış (FR-11, parse-job) sağlanır — bu scraping değildir, kullanıcının sağladığı metni AI ile yapılandırır.
 
 ### FR-03: Başvuru Ekleme ve Düzenleme
 
@@ -236,12 +249,12 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 - Varsayılan aşamalar silinemez — yalnızca yeniden adlandırılabilir
 - Her aşama geçişi zaman damgasıyla kaydedilir
 
-### FR-06: Görsel Takip Tahtası
+### FR-06: Görsel Takip (Web Liste/Aşama Görünümü)
 
-- Her aşama ayrı sütunda görüntülenir
-- Sürükle-bırak ile aşama değiştirilebilir
+- Her aşama ayrı görünümde/sütunda gösterilir
+- Aşama değiştirme alt sayfa/seçim ile yapılır (sürükle-bırak mobil v2)
 - Kart üzerinde: şirket adı (kalın), pozisyon, platform renk noktası, göreli tarih ("3 gün önce")
-- Uzun basma ile hızlı menü açılır (aşama değiştir, sil, detaya git)
+- Hızlı aksiyon menüsü (aşama değiştir, sil, detaya git)
 
 ### FR-07: Arşiv
 
@@ -249,7 +262,7 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 - Şirket adı ve pozisyona göre anlık arama
 - Platform ve aşamaya göre filtreleme
 
-### FR-08: Elenme Analizi — Aşamalı Açılım
+### FR-08: Elenme Analizi / Yolculuğum — Aşamalı Açılım
 
 | Başvuru Sayısı | Ekran İçeriği |
 |---------------|---------------|
@@ -259,8 +272,11 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 
 - Analiz sekmesi her zaman görünürdür — kilitli değildir
 - İçerik başvuru sayısına göre dinamik olarak güncellenir
+- **AI Pusula:** Bu sayısal teşhis Gemini'ye gönderilir; başlık + 3-4 somut öneri üretilir (bkz. FR-12)
 
-### FR-09: Bildirimler
+### FR-09: Bildirimler — 📱 Mobil v2
+
+> Aşağıdaki push gereksinimleri mobil sürümde geçerlidir. Web MVP'de uygulama içi hatırlatma kullanılır.
 
 - Bir başvurudan 14 gün haber alınmamışsa bildirim gönderilir
 - Günde maksimum 1 bildirim
@@ -270,8 +286,31 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 
 ### FR-10: Tekrarlayan Başvuru Uyarısı
 
-- Kullanıcı daha önce eklediği bir URL'yi tekrar yapıştırırsa uyarı modalı gösterilir
+- Kullanıcı daha önce eklediği bir başvuruyu (URL veya şirket+pozisyon) tekrar eklerse uyarı gösterilir
 - Kullanıcı yine de ekleyebilir — engellenmez, uyarılır
+
+### FR-11: İlan Linkinden/Metninden Otomatik Form Doldurma (AI)
+
+- Kullanıcının yapıştırdığı ilan metni/linki Edge Function üzerinden Gemini'ye gönderilir
+- Şirket, pozisyon, şehir, platform alanları AI ile çözümlenip forma önerilir
+- Kullanıcı önerilen değerleri düzenleyip kaydedebilir
+- API anahtarı yalnız sunucuda; istemci asla doğrudan Gemini'ye gitmez
+
+### FR-12: AI Pusula — İçgörü (Gemini)
+
+- Frontend, gizliliğe uygun **sayısal teşhis** (huni oranları, darboğaz, güçlü alan/sektör, momentum) hesaplar
+- Bu teşhis Edge Function (`ai-suggestions`) üzerinden Gemini'ye gönderilir
+- AI'a **şirket adı veya kişisel not GÖNDERİLMEZ** — yalnız oran, sayı, alan/sektör etiketi
+- Çıktı: 1 cümlelik headline + 3-4 somut öneri (kategoriler: momentum, güçlü alan, darboğaz, takip, iyi oluş)
+- Dayanıklılık: `gemini-2.5-flash` → boş/hata dönerse `gemini-2.5-flash-lite` yedeği
+- Önbellek: veri değişmedikçe yeniden üretilmez (kota koruması)
+
+### FR-13: CV ↔ İlan Uyum Analizi (AI)
+
+- Kullanıcı CV PDF'i yükler (Supabase Storage, özel bucket + RLS)
+- Edge Function (`analyze-fit`) CV'yi `inline_data` ile okuyup ilanla karşılaştırır
+- Çıktı: uyum skoru + gerekçe
+- Anahtar sunucuda gizli; çağrı yalnız giriş token'ıyla yapılır
 
 ---
 
@@ -289,36 +328,36 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 **US-03:** Bir iş arayan olarak, yanlışlıkla eklediğim başvuruyu silebilmek istiyorum.
 
 *Kabul Kriterleri:*
-- [ ] Silme seçeneği başvuru detay sayfasında ve uzun basma menüsünde bulunur
+- [ ] Silme seçeneği başvuru detay sayfasında ve hızlı aksiyon menüsünde bulunur
 - [ ] Silme öncesinde "Bu işlem geri alınamaz" onay dialogu gösterilir
-- [ ] Silinen başvuru görsel tahtadan ve arşivden anında kaybolur
+- [ ] Silinen başvuru görünümden ve arşivden anında kaybolur
 - [ ] Silinen başvuru elenme analizini etkiler (hesaplamadan çıkar)
 
-### EP-04: Görsel Takip Tahtası
+### EP-04: Görsel Takip
 
-**US-04:** Bir iş arayan olarak, başvurularımı sürükle-bırak ile aşamalar arasında taşıyabilmek istiyorum.
+**US-04:** Bir iş arayan olarak, başvurularımı aşamalar arasında taşıyabilmek istiyorum.
 
 *Kabul Kriterleri:*
-- [ ] Tüm aşama kombinasyonları arasında sürükle-bırak çalışır
-- [ ] Taşıma sırasında dokunsal geri bildirim verilir
+- [ ] Tüm aşama kombinasyonları arasında geçiş çalışır (web: seçim/alt sayfa; mobil v2: sürükle-bırak)
 - [ ] Aşama değişikliği anında kaydedilir
-- [ ] 50 kartla tahta 2 saniyede açılır
+- [ ] 50 kartla görünüm 2 saniyede açılır
 
-### EP-07: Elenme Analizi
+### EP-07: Elenme Analizi & AI Pusula
 
-**US-05:** Bir iş arayan olarak, hangi mülakat aşamasında elendiğimi görebilmek istiyorum; böylece stratejimi geliştirebilirim.
+**US-05:** Bir iş arayan olarak, hangi mülakat aşamasında elendiğimi görüp AI'dan somut öneri alabilmek istiyorum; böylece stratejimi geliştirebilirim.
 
 *Kabul Kriterleri:*
 - [ ] 0-4 başvuruda bilgilendirici boş ekran mesajı gösterilir
 - [ ] 5-9 başvuruda aşama dağılımı görünür
 - [ ] 10+ başvuruda tam elenme hunisi görünür
+- [ ] AI Pusula başlık + 3-4 öneri üretir; şirket adı AI'a gönderilmez
 - [ ] Silinen başvurular analizden çıkarılır
 
-### EP-08: Bildirimler
+### EP-08: Bildirimler — 📱 Mobil v2
 
 **US-06:** Çalışırken iş arayan biri olarak, kilit ekranımda hangi şirkete başvurduğum görünmesini istemiyorum.
 
-*Kabul Kriterleri:*
+*Kabul Kriterleri (mobil v2):*
 - [ ] Kilit ekranı bildirim önizlemesinde yalnızca "Applyze — Hatırlatıcın var" görünür
 - [ ] Şirket adı veya pozisyon bilgisi önizlemede yer almaz
 - [ ] Bu davranış iOS ve Android'de ayrı ayrı test edilir
@@ -331,36 +370,40 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 
 | Gereksinim | Hedef |
 |-----------|-------|
-| Görsel tahta açılış süresi (50 kartla) | < 2 sn |
-| Uygulama soğuk başlangıç | < 3 sn |
+| Görünüm açılış süresi (50 kartla) | < 2 sn |
+| Uygulama soğuk başlangıç (web ilk yük) | < 3 sn |
 | Arşiv araması (100+ başvuruda) | Anlık |
+| AI Pusula yanıt süresi | < 6 sn (önbellekte anlık) |
 
 ### Güvenilirlik
 
 | Gereksinim | Hedef |
 |-----------|-------|
-| Çökme oranı | < %0.5 |
+| Çökme/hata oranı | < %0.5 |
 | Veri kaybı | Sıfır tolerans |
-| Beta test süresi (çökmesiz) | 7 gün |
+| AI dayanıklılığı | Ana model boş/hata → yedek model; kota dolunca doğru mesaj |
 
 ### Güvenlik
 
 | Katman | Önlem |
 |--------|-------|
 | Kimlik doğrulama | JWT (1 saat) + yenileme token'ı (30 gün) |
-| Veri izolasyonu | Satır bazlı erişim kontrolü her tabloda |
-| API güvenliği | Servis anahtarı yalnızca Edge Functions'ta |
-| Bildirim gizliliği | Önizleme metni genel, şirket adı yok |
+| Veri izolasyonu | Satır bazlı erişim kontrolü (RLS) her tabloda |
+| API güvenliği | Servis/AI anahtarları yalnızca Edge Functions'ta; istemcide değil |
+| CORS | Edge Functions yalnız bilinen origin'lere izin verir (allowlist) |
+| AI gizliliği | AI'a şirket adı/kişisel not gönderilmez; yalnız sayısal teşhis |
 
 ### Erişilebilirlik
 
-- Minimum dokunma hedefi 44pt
+- Minimum dokunma/tıklama hedefi 44pt
 - Metin boyutu sistem ayarına uyar
-- Ekran okuyucu (VoiceOver / TalkBack) için semantik etiketler
+- Ekran okuyucu için semantik etiketler
 
 ---
 
 ## 8. Tasarım Gereksinimleri
+
+> Tasarım sisteminin tam referansı için bkz. `DesignSystem.md`. Aşağıdaki bölüm ürün gereksinimi düzeyindeki ilkeleri özetler.
 
 ### Tasarım İlkeleri
 
@@ -368,47 +411,22 @@ Applyze, iş arayanların Kariyer.net, LinkedIn, Youthall ve Anbean gibi birden 
 Her ekranın tek birincil aksiyonu var. Başvuru ekleme 10 saniye altında. Gürültü tolere edilmez.
 
 **2 — Gizlilik Öncelikli**
-Bildirimler, ikon ve görünüm nötr. Tek bakışta "iş arama uygulaması" anlaşılmamalı.
+Görünüm nötr; AI çıktılarına şirket adı sızmaz. "Şirket adların paylaşılmaz" vurgusu görünür.
 
-**3 — Native Hissettir**
-iOS'ta iOS dili, Android'de Material 3. Platform kuralları kırılmaz. Dokunsal geri bildirim.
+**3 — Web'de Ferah, Mobilde Native (v2)**
+Web'de tam genişlik, editöryel düzen. Mobil v2'de platform kuralları (iOS dili / Material 3) ve dokunsal geri bildirim.
 
 **4 — Veriyi Görsel Yap**
 Sayılar kadar görsel önemli. Analiz "tek bakışta anlama" sağlamalı.
-
-### Renk Sistemi
-
-| Renk Amacı | Hex | Kullanım |
-|-----------|-----|---------|
-| Birincil (Teal) | `#0F6E56` | Butonlar, başlıklar, aktif sekme |
-| LinkedIn | `#0A66C2` | Platform renk noktası |
-| Kariyer.net | `#FF6600` | Platform renk noktası |
-| Youthall | `#7C3AED` | Platform renk noktası |
-| Anbean | `#059669` | Platform renk noktası |
-| Başarı / Teklif | `#059669` | Pozitif metrikler |
-| Uyarı | `#D97706` | Yanıt bekleyenler |
-| Elenildi | `#6B7280` | Elenildi aşaması — nötr gri |
-| Hata | `#DC2626` | Form hataları |
-
-### Bileşen Gereksinimleri
-
-| Bileşen | Gereksinim |
-|--------|-----------|
-| Görsel Tahta Kartı | Min 80pt. Şirket (kalın), pozisyon, platform noktası, göreli tarih. Uzun basma menüsü. |
-| Boş Ekran | Her boş ekran ikon + açıklama + yönlendirici buton içermeli. |
-| Hata Bildirimi | Kırmızı, alt kısım, 3 sn, kaydırarak kapatılabilir. |
-| Yükleme Göstergesi | Kart formunda iskelet animasyonu. Döner simge değil. |
-| Alt Sayfa | Aşama değiştirme için. Kapatılabilir. |
-| Platform Noktası | Platform rengiyle dolu nokta + isim. Küçük. |
 
 ### Navigasyon Mimarisi
 
 | Seviye | Tip | İçerik |
 |--------|-----|-------|
-| L0 | Sekme Çubuğu (5 sekme) | Gösterge Paneli, Görsel Tahta, Arşiv, Analiz, Ayarlar |
+| L0 | Sekme Çubuğu | Gösterge Paneli (Özet/Pusula), Liste, Yolculuğum/Analiz, Profil/Ayarlar |
 | L1 | Yığın Gezgini | Her sekme kendi yığınında |
-| L2 | Alt Sayfa / Modal | Başvuru ekleme, detay |
-| L3 | Derin Bağlantı | `apptrack://application/:id` — bildirim yönlendirmesi |
+| L2 | Alt Sayfa / Modal | Başvuru ekleme, detay, aşama değiştirme |
+| L3 | Derin Bağlantı | `applyze://application/:id` — mobil v2 bildirim yönlendirmesi |
 
 ---
 
@@ -418,35 +436,21 @@ Sayılar kadar görsel önemli. Analiz "tek bakışta anlama" sağlamalı.
 
 | Tablo | Temel Alanlar | İlişkiler |
 |-------|-------------|---------|
-| `users` | id (UUID PK), email, created_at | 1:N → applications |
 | `applications` | id, user_id FK, company_name, position, platform, source_url, current_stage_id FK, applied_at, updated_at, deleted_at | N:1 → users, N:1 → stages |
 | `stages` | id, user_id FK, name, color, order, is_terminal, is_default | N:1 → users, 1:N → applications |
 | `stage_history` | id, application_id FK, stage_id FK, changed_at | N:1 → applications |
 | `notes` | id, application_id FK, content (maks 2000), created_at | N:1 → applications |
+| `profiles` | user_id, expo_push_token (v2), notifications_enabled (v2), ... | 1:1 → users |
 
 > `deleted_at` alanı yumuşak silme için kullanılır. Null olmayan kayıtlar tüm sorgulardan ve analizden hariç tutulur.
 
-### Veri Saklama Politikası
-
-| Kural | Detay |
-|-------|-------|
-| Kullanıcı verisi | Hesap aktifken saklanır. Silme: 30 gün yumuşak silme → kalıcı silme. |
-| Başvuru verisi | Kullanıcı silebilir (yumuşak silme). Hesap silinince tüm veri kalıcı silinir. |
-| Bildirim logu | Son 90 gün saklanır. |
-| Kimlik doğrulama token'ları | Erişim token'ı 1 saat. Yenileme token'ı 30 gün. Çıkışta geçersiz. |
-
 ### Analitik Veri Toplama
-
-**Toplanan (anonim, kullanıcı rızasıyla):**
-- Ekran görüntülenme sayısı
-- Özellik kullanım oranları
-- Oturum süresi ve sıklığı
-- Çökme logları
 
 **TOPLANMAYAN:**
 - Başvurulan şirket veya pozisyon adları
 - Kişisel notlar
 - İş arama içeriği
+- **AI'a gönderilen veri:** yalnız anonim sayısal teşhis (oran/sayı/alan etiketi)
 
 ---
 
@@ -456,23 +460,38 @@ Sayılar kadar görsel önemli. Analiz "tek bakışta anlama" sağlamalı.
 
 | Katman | Teknoloji | Gerekçe |
 |--------|-----------|---------|
-| Mobil Framework | Expo (React Native) | iOS + Android tek kod tabanı, hızlı iterasyon |
-| Backend ve Kimlik Doğrulama | Supabase | PostgreSQL, satır bazlı erişim kontrolü, gerçek zamanlı, ücretsiz başlangıç |
-| Durum Yönetimi | Zustand | Sade, az ortak kod |
-| Gezinme | Expo Router | Dosya tabanlı, derin bağlantı desteği |
-| Bildirimler | Expo Notifications + Supabase cron | Zamanlanmış bildirim |
-| Analitik | Amplitude (ücretsiz başlangıç) | Kullanıcı davranışı takibi |
-| Dağıtım | Expo EAS Build | App Store + Google Play |
-| Versiyon Kontrolü | GitHub | Dal: main + develop + feature |
+| Frontend Framework | Expo (React Native) + Expo Router, TypeScript, NativeWind | Tek kod tabanından **web (MVP)** + mobil (v2). Web export Vercel'de yayında. |
+| Backend ve Kimlik Doğrulama | Supabase | PostgreSQL + RLS, Auth, gerçek zamanlı, cömert ücretsiz katman |
+| API Katmanı | Supabase Edge Functions (Deno/TypeScript) | Platformdan bağımsız API + AI köprüsü; anahtarlar sunucuda |
+| **Yapay Zekâ** | **Google Gemini (`2.5-flash` → `flash-lite` yedek)** | **Pusula içgörü, CV↔ilan uyumu, ilan→form.** Çağrılar yalnız Edge Functions üzerinden. |
+| Dosya | Supabase Storage | CV PDF'leri (özel bucket + RLS) |
+| Zamanlanmış İşler | pg_cron | Sessiz başvuru sorgusu (bildirim adayı — mobil v2) |
+| **Web Dağıtım** | **Vercel** (`npx expo export -p web` → `dist`) | **MVP canlı yayın.** Her `main` merge'i otomatik deploy. |
+| Mobil Dağıtım | Expo EAS Build → App Store + Google Play | **v2'ye ertelendi** |
+| Alan adı / E-posta | Cloudflare (DNS) · Resend (SMTP, custom e-posta) | Üretim kimlik e-postaları, Supabase mail limiti aşıldı |
+| Versiyon Kontrolü | GitHub | Dal: main + feature |
+
+### AI Mimari Akışı
+
+```
+Kullanıcı (Expo Web) → giriş token'ı (Bearer)
+        ▼
+Supabase Edge Functions (Deno API) — şirket adı GÖNDERİLMEDEN, yalnız sayısal teşhis
+        ▼
+Google Gemini API (2.5-flash → flash-lite yedek)
+```
+
+- **API anahtarı asla istemcide değildir** — tüm Gemini çağrıları Edge Function üzerinden.
+- **Gizlilik önceliklidir** — AI'a şirket adları/kişisel notlar gönderilmez.
 
 ### Veritabanı Güvenliği
 
 ```sql
 -- Satır bazlı erişim kontrolü — her kullanıcı sadece kendi verisine erişir
-CREATE POLICY 'Kullanicilar yalnizca kendi basvirularına erisebilir'
+CREATE POLICY "own_applications"
   ON applications FOR ALL
   USING (auth.uid() = user_id);
--- Tüm tablolara aynı politika uygulanır
+-- Tüm tablolara aynı mantıkla politika uygulanır
 ```
 
 ## 11. Teknik Kısıtlamalar ve Bağımlılıklar
@@ -481,62 +500,52 @@ CREATE POLICY 'Kullanicilar yalnizca kendi basvirularına erisebilir'
 
 | Kısıtlama | Etki | Çözüm |
 |----------|------|-------|
-| ~~#1 Otomatik bilgi çekme teknik riski~~ | Gerçekleşti (Mayıs 2026) | v2'ye ertelendi (bkz. §13) |
-| Kariyer.net resmi API yok | Web kazıma gerekiyor | Modüler Edge Function parser |
-| Apple Developer ($99/yıl) | Sprint 1 başında açılmalı | Gün 1 görevi |
-| App Store inceleme 1-7 gün | Dağıtım tarihi kesin değil | Sprint 4'te 5 günlük tampon |
+| ~~Otomatik bilgi çekme teknik riski~~ | Gerçekleşti (Mayıs 2026) | v2'ye ertelendi; yerine AI ilan→form (bkz. §13) |
+| Gemini ücretsiz kota | Yoğun kullanımda 429 | Önbellek + doğru hata mesajı + gerekirse faturalandırma |
+| Supabase varsayılan mail limiti | Saatte ~2 mail | Custom SMTP (Resend + il9u.com) |
 | Supabase ücretsiz başlangıç | 500+ kullanıcıda limit aşılabilir | Pro plan ($25/ay) hazırda |
+| Mobil mağaza süreçleri (Apple/Google) | v2'ye ertelendi | Web MVP ile bağımsız; mobil yol haritasında |
 
 ### Dış Bağımlılıklar
 
 | Bağımlılık | Tip | Risk |
 |-----------|-----|------|
-| Supabase | Backend/Kimlik Doğrulama/Veritabanı | Orta — servis kesintisi olasılığı |
-| Kariyer.net (web kazıma) | Veri kaynağı | Yüksek — yapı değişebilir |
-| Youthall (web kazıma) | Veri kaynağı | Orta |
-| Expo Notifications | Push bildirim | Düşük |
-| Apple App Store | Dağıtım | Düşük |
-| Google Play | Dağıtım | Düşük |
+| Supabase | Backend/Auth/DB/Functions | Orta — servis kesintisi olasılığı |
+| Google Gemini | AI çekirdek | Orta — kota/model davranışı (yedek model ile azaltıldı) |
+| Vercel | Web dağıtım | Düşük |
+| Resend / Cloudflare | E-posta / DNS | Düşük |
 
 ---
 
 ## 12. Yayın Kabul Kriterleri
 
-### Fonksiyonel Kabul
+### Fonksiyonel Kabul (Web MVP)
 
 | # | Kriter | Doğrulama | Sonuç |
 |---|--------|-----------|-------|
-| 1 | Email ile kayıt ve giriş çalışıyor | Manuel test | ☐ |
-| 2 | Google OAuth iOS ve Android'de çalışıyor | Her iki platformda test | ☐ |
-| 3 | Kariyer.net linki otomatik dolduruyor (5 farklı ilan) | 5 aktif ilan ile test | ☐ |
-| 4 | Youthall linki otomatik dolduruyor | 5 aktif ilan ile test | ☐ |
-| 5 | Manuel ilan ekleme çalışıyor | Form doldurma ve kaydetme | ☐ |
-| 6 | Görsel tahta 10+ başvuruda çalışıyor | 10 başvuruyla test | ☐ |
-| 7 | Sürükle-bırak tüm sütun kombinasyonlarında çalışıyor | Tüm geçişlerde test | ☐ |
+| 1 | Email ile kayıt ve giriş çalışıyor | Canlı URL testi | ☐ |
+| 2 | Google OAuth çalışıyor | Canlı URL testi | ☐ |
+| 3 | İlan linkinden/metninden AI otomatik doldurma çalışıyor | 3-5 ilanla test | ☐ |
+| 4 | Manuel başvuru ekleme çalışıyor | Form doldurma ve kaydetme | ☐ |
+| 5 | Excel/CSV toplu içe aktarma çalışıyor (tekrar kontrollü) | Örnek dosya ile | ☐ |
+| 6 | Aşama görünümü 10+ başvuruda çalışıyor | 10 başvuruyla test | ☐ |
+| 7 | Aşama güncelleme tüm kombinasyonlarda çalışıyor | Tüm geçişlerde test | ☐ |
 | 8 | Arşiv araması 10+ başvuruda anlık çalışıyor | Farklı arama terimleriyle | ☐ |
-| 9 | Gösterge paneli metrikleri doğru hesaplanıyor | Bilinen veri setiyle doğrulama | ☐ |
-| 10 | Push bildirim iOS ve Android'e ulaşıyor | TestFlight + dahili test | ☐ |
-| 11 | Bildirim önizlemesi şirket adı içermiyor | Kilitli ekranda kontrol | ☐ |
-| 12 | Tekrarlayan başvuru uyarısı tetikleniyor | Aynı URL ile iki kez ekleme | ☐ |
+| 9 | Gösterge paneli metrikleri doğru hesaplanıyor | Bilinen veri setiyle | ☐ |
+| 10 | AI Pusula içgörü üretiyor (şirket adı göndermeden) | Edge Function log + çıktı | ☐ |
+| 11 | CV ↔ ilan uyum analizi skor + gerekçe üretiyor | Örnek CV + ilan ile | ☐ |
+| 12 | Tekrarlayan başvuru uyarısı tetikleniyor | Aynı kayıt iki kez | ☐ |
 | 13 | Başvuru silme onay dialogu gösteriliyor | Silme akışı testi | ☐ |
 | 14 | Silinen başvuru elenme analizinden çıkıyor | Analiz ekranı doğrulama | ☐ |
 | 15 | Elenme analizi 0/5/10 eşiklerinde doğru içerik gösteriyor | Her eşikte test | ☐ |
 
-### Performans Kabul
+### Mobil Kabul — 📱 v2
 
-| # | Kriter | Hedef | Sonuç |
-|---|--------|-------|-------|
-| 1 | Görsel tahta 50 kartla açılış | < 2 sn | ☐ |
-| 3 | Uygulama soğuk başlangıç | < 3 sn | ☐ |
-| 4 | Beta test 7 gün çökmesiz | 0 çökme | ☐ |
-
-### Kullanıcı Deneyimi Kabul
-
-| # | Kriter | Test Yöntemi | Sonuç |
-|---|--------|-------------|-------|
-| 1 | Yeni kullanıcı 5 dakikada ilk başvurusunu ekleyebilir | 5 kişiyle kullanılabilirlik testi | ☐ |
-| 2 | Bildirim önizlemesi 3/3 test kullanıcısı tarafından içerik anlaşılmadan geçildi | Gizlilik testi | ☐ |
-| 3 | Beta kullanıcılarının %50'si 7. günde hâlâ aktif | Grup takibi | ☐ |
+| # | Kriter | Sonuç |
+|---|--------|-------|
+| 1 | Push bildirim iOS/Android'e ulaşıyor | v2 |
+| 2 | Bildirim önizlemesi şirket adı içermiyor | v2 |
+| 3 | EAS production build App Store/Play'e gönderiliyor | v2 |
 
 ---
 
@@ -544,15 +553,15 @@ CREATE POLICY 'Kullanicilar yalnizca kendi basvirularına erisebilir'
 
 | Karar | Gerekçe | Yeniden Değerlendirme |
 |-------|---------|----------------------|
-| LinkedIn otomatik bilgi çekme yok | Aktif engelleme — hukuki ve teknik risk | v2: resmi API araştırma |
-| Kariyer.net / Youthall / Anbean otomatik bilgi çekme yok | Kariyer.net'in PerimeterX bot koruması veri merkezi IP'lerini engelliyor (Faz 0.2 — HTTP 403) | v2: proxy servisi veya resmi API ortaklığı |
-| İlan toplama yok | Platform API'si yok. Ortaklık 2.5 ayda kurulamaz | v3: ortaklık stratejisi |
-| Web uygulaması yok | Mobil öncelikli. Kaynak yetersiz | v2: React web |
-| Yapay zeka ilan tavsiyesi yok | Veri birikimi yetersiz | v2: Anthropic API |
-| Seri sistemi yok | Kullanıcı psikolojisiyle çelişiyor. İş bulunca bırakmak istenir. | Kalıcı red |
+| **Mobil (iOS/Android) yayını yok** | Bitirme için web deploy yeterli; kaynak ve mağaza süreçleri odağı dağıtırdı. Kod tabanı mobile hazır tutuldu. | **v2: EAS build → App Store + Google Play** |
+| **Push bildirim yok** | Mobil-özel altyapı; web MVP'de in-app hatırlatma yeterli | v2: Expo Notifications (mobil) |
+| LinkedIn/Kariyer.net/Youthall otomatik bilgi çekme (scraping) yok | PerimeterX bot koruması veri merkezi IP'lerini engelliyor (HTTP 403) | v2: proxy servisi veya resmi API |
+| İlan toplama yok | Platform API'si yok | v3: ortaklık stratejisi |
+| AI ilan *tavsiye/öneri motoru* yok | Veri birikimi yetersiz. (Not: AI **içgörü/Pusula** ve **CV uyumu** MVP'de **VAR**.) | v2: öneri motoru |
+| Seri/streak sistemi yok | Kullanıcı psikolojisiyle çelişiyor | Kalıcı red |
 | Sosyal özellikler yok | Gizlilik öncelikli tasarımla çelişiyor | v3: opsiyonel |
-| CV oluşturucu yok | Farklı ürün kategorisi. Odak dağıtır | Bağımsız ürün fırsatı |
-| Tam çevrimdışı destek yok | Supabase gerçek zamanlı bağlantı gerektirir | v2: çevrimdışı-öncelikli mimari |
+| CV oluşturucu yok | Farklı ürün kategorisi | Bağımsız ürün fırsatı |
+| Tam çevrimdışı destek yok | Supabase gerçek zamanlı bağlantı gerektirir | v2 |
 
 ---
 
@@ -562,22 +571,18 @@ CREATE POLICY 'Kullanicilar yalnizca kendi basvirularına erisebilir'
 |-------|-------|
 | PRD | Ürün Gereksinimleri Dokümanı — geliştirici referansı |
 | MoSCoW | Olmazsa Olmaz / Olmalı / Olsa İyi / Olmayacak — önceliklendirme yöntemi |
-| Fonksiyonel Olmayan Gereksinimler | Performans, güvenlik, erişilebilirlik gereksinimleri |
 | Epic | İlgili özellikleri gruplayan üst düzey iş birimi |
 | Kullanıcı Hikayesi | Kullanıcı perspektifinden gereksinim: "Bir X olarak, Y için Z yapmak istiyorum" |
 | Kabul Kriteri | Bir özelliğin tamamlandığını kanıtlayan ölçülebilir koşullar |
-| Satır Bazlı Erişim Kontrolü (RLS) | Veritabanında her kullanıcının yalnızca kendi verisine erişmesini sağlayan güvenlik katmanı |
-| Otomatik Bilgi Çekme | Link yapıştırılınca ilan bilgilerinin otomatik çekilmesi |
-| Derin Bağlantı | Uygulama içinde belirli ekrana doğrudan açılan bağlantı |
-| Soğuk Başlangıç | Uygulamanın bellekten silinmiş halde ilk açılışı |
-| Dokunsal Geri Bildirim | Sürükle-bırak gibi eylemlerde titreşimli geri bildirim |
-| Edge Function | Supabase'in sunucusuz Deno fonksiyonu |
-| Yumuşak Silme | Veriyi silmek yerine "silinmiş" olarak işaretleme — geri alınabilir |
-| Elenme Hunisi | Kullanıcının başvuru sürecindeki aşama geçiş oranlarını gösteren görsel |
-| Günlük/Aylık Aktif Kullanıcı Oranı (DAU/MAU) | Günlük aktif kullanıcı sayısının aylık aktif kullanıcı sayısına oranı |
-| Kullanıcı Grubu (Cohort) | Aynı dönemde kaydolan kullanıcı grubu |
-| EAS | Expo Application Services — App Store ve Google Play dağıtım altyapısı |
+| RLS (Satır Bazlı Erişim Kontrolü) | Her kullanıcının yalnızca kendi verisine erişmesini sağlayan güvenlik katmanı |
+| Edge Function | Supabase'in sunucusuz Deno fonksiyonu — API + AI köprüsü |
+| Pusula | Başvuru verisinden AI ile üretilen içgörü/öneri ekranı |
+| Otomatik Bilgi Çekme (Scraping) | İlan sayfasından verinin otomatik çekilmesi — KAPSAM DIŞI (v2) |
+| AI Otomatik Doldurma (parse-job) | Kullanıcının verdiği ilan metnini AI ile yapılandırma (scraping değil) |
+| Yumuşak Silme | Veriyi silmek yerine "silinmiş" olarak işaretleme |
+| Elenme Hunisi | Başvuru sürecindeki aşama geçiş oranlarını gösteren görsel |
+| EAS | Expo Application Services — mobil mağaza dağıtım altyapısı (v2) |
 
 ---
 
-*Applyze PRD — v2.0 | Nisan 2026*
+*Applyze PRD — v2.1 | Haziran 2026 | Web MVP canlı, mobil v2'ye ertelendi*
