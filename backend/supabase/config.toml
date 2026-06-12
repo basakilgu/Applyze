@@ -434,3 +434,31 @@ entrypoint = "./functions/send-inactivity-notifications/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-inactivity-notifications/*.html" ]
+
+# AI ve hesap fonksiyonları. Frontend bunları oturum token'ıyla çağırır
+# (verify_jwt = true). Daha önce config'de kayıtlı değillerdi; config tabanlı
+# deploy / `supabase start` ile sunulabilmeleri için eklendi.
+[functions.ai-suggestions]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/ai-suggestions/index.ts"
+
+[functions.analyze-fit]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/analyze-fit/index.ts"
+
+[functions.parse-job]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/parse-job/index.ts"
+
+[functions.extract-cv]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/extract-cv/index.ts"
+
+[functions.delete-account]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/delete-account/index.ts"

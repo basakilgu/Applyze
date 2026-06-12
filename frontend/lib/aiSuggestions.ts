@@ -381,10 +381,16 @@ export async function fetchAiSuggestions(apps: any[]): Promise<AiResult> {
   }
 
   try {
-    // supabase.functions.invoke oturum token'ını otomatik ekler
-    const { data, error } = await supabase.functions.invoke("ai-suggestions", {
+    // supabase.functions.invoke oturum token'ını otomatik ekler.
+    // Timeout: Edge Function cold-start'ta takılırsa kullanıcı sonsuz
+    // "Pusula okuyor…" spinner'ında kalmasın — 20 sn sonra hata say.
+    const invokePromise = supabase.functions.invoke("ai-suggestions", {
       body: { summary },
     });
+    const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 20000),
+    );
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
 
     if (error) {
       console.error("ai-suggestions invoke hatası:", error);
@@ -393,9 +399,19 @@ export async function fetchAiSuggestions(apps: any[]): Promise<AiResult> {
       return { status: "error", message: "Öneriler şu an alınamadı." };
     }
 
-    const suggestions = data?.suggestions;
-    const headline = typeof data?.headline === "string" ? data.headline : undefined;
-    if (Array.isArray(suggestions) && suggestions.length > 0) {
+    // AI'dan gelen her öğeyi doğrula: null / eksik alanlı öğeler boş satır
+    // (hatta crash: s.baslik of null) üretebilir. Sadece geçerli olanları al.
+    const rawSuggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+    const suggestions = rawSuggestions.filter(
+      (s: any) =>
+        s && typeof s.baslik === "string" && s.baslik.trim() &&
+        typeof s.metin === "string" && s.metin.trim(),
+    );
+    const headline =
+      typeof data?.headline === "string" && data.headline.trim()
+        ? data.headline.trim()
+        : undefined;
+    if (suggestions.length > 0) {
       const result: AiResult = { status: "ok", suggestions, headline };
       _memCache = { fp, result };
       writePersistentCache({ fp, result, ts: Date.now() });

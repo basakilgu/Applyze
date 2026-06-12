@@ -86,6 +86,17 @@ export default function CvScreen() {
 
       const resp = await fetch(asset.uri);
       const blob = await resp.blob();
+
+      // Boyut güvencesi: çok büyük PDF base64'e çevrilince belleği/işlevi
+      // kilitleyebilir. Normal CV'ler birkaç MB'tır; 10 MB üstünü reddet.
+      const MAX_BYTES = 10 * 1024 * 1024;
+      if (blob.size > MAX_BYTES) {
+        setErr("Dosya çok büyük (en fazla 10 MB). Daha küçük bir PDF dene.");
+        setBusy(false);
+        setStatus(null);
+        return;
+      }
+
       const path = `${uid}/cv.pdf`;
 
       const { error: upErr } = await supabase.storage.from("cvs").upload(path, blob, {

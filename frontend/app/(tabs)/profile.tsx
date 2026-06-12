@@ -1,9 +1,9 @@
 // app/(tabs)/profile.tsx — Profil ekranı
 // Supabase auth ile gerçek kullanıcı bilgisi.
 
-import React, { useMemo, useState, useId, useEffect } from "react";
+import React, { useMemo, useState, useId, useCallback } from "react";
 import { View, Text, ScrollView, Alert, Pressable, Switch, Platform, Linking } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
@@ -393,23 +393,30 @@ export default function ProfileScreen() {
     [user.member_since]
   );
 
-  useEffect(() => {
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const u = session?.user;
-      if (u) {
-        const email = u.email ?? "";
-        const fullName =
-          (u.user_metadata?.full_name as string | undefined) ??
-          email.split("@")[0]; // metadata yoksa email'in kullanıcı kısmını göster
-        setUser({
-          full_name: fullName,
-          email,
-          member_since: u.created_at ?? new Date().toISOString(),
-        });
-      }
-    })();
-  }, []);
+  // useFocusEffect: ekran her odaklandığında (ör. "Profil bilgilerim"den isim
+  // değiştirip geri dönünce) kullanıcı bilgisini tazeler. Tab unmount olmadığı
+  // için mount-only useEffect eski ismi gösteriyordu.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const u = session?.user;
+        if (u && active) {
+          const email = u.email ?? "";
+          const fullName =
+            (u.user_metadata?.full_name as string | undefined) ??
+            email.split("@")[0]; // metadata yoksa email'in kullanıcı kısmını göster
+          setUser({
+            full_name: fullName,
+            email,
+            member_since: u.created_at ?? new Date().toISOString(),
+          });
+        }
+      })();
+      return () => { active = false; };
+    }, []),
+  );
 
 const handleExport = () => {
     const apps = mockStore.getAll();
