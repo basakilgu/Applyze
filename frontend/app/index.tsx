@@ -17,7 +17,9 @@ export default function SplashScreen() {
 
     (async () => {
       const { data } = await supabase.auth.getSession();
-      const seenOnboarding = await getHasSeenOnboarding();
+      // Onboarding artık HESAP bazlı: yalnız oturum varsa ve kullanıcı henüz
+      // görmediyse gösterilir. Oturum yoksa doğrudan giriş ekranına gidilir.
+      const seenOnboarding = data.session ? await getHasSeenOnboarding() : true;
       if (!mounted) return;
 
       const elapsed = Date.now() - startedAt;
@@ -25,14 +27,14 @@ export default function SplashScreen() {
 
       setTimeout(() => {
         if (!mounted) return;
-        // Tanitim ekranlari ilk ziyarette herkese ONCE gosterilir.
-        // Onboarding bitince (oturum yoksa) giris ekranina gidilir.
-        if (!seenOnboarding) {
-          router.replace("/(onboarding)");
-        } else if (data.session) {
-          router.replace("/(tabs)");
-        } else {
+        // Oturum yoksa giriş; oturum varsa ve onboarding görülmediyse tanıtım;
+        // görüldüyse doğrudan uygulama. (Onboarding artık hesap bazlı.)
+        if (!data.session) {
           router.replace("/(auth)/login");
+        } else if (!seenOnboarding) {
+          router.replace("/(onboarding)");
+        } else {
+          router.replace("/(tabs)");
         }
       }, wait);
     })();
