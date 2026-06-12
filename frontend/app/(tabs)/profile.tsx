@@ -82,15 +82,13 @@ function computeCounts(apps: any[]) {
   };
 }
 
-function computeDaysSinceStart(apps: any[]): number {
-  if (apps.length === 0) return 0;
-  const sorted = [...apps].sort(
-    (a, b) =>
-      new Date(a.applied_at).getTime() - new Date(b.applied_at).getTime()
-  );
-  return Math.floor(
-    (Date.now() - new Date(sorted[0].applied_at).getTime()) /
-      (1000 * 60 * 60 * 24)
+// Hesap açılışından bu yana geçen gün. Eskiden en eski başvurunun tarihinden
+// hesaplanıyordu; geçmiş tarihli başvuru içe aktarınca yanlış değer çıkıyordu.
+function computeDaysSinceStart(memberSince?: string | null): number {
+  if (!memberSince) return 0;
+  return Math.max(
+    0,
+    Math.floor((Date.now() - new Date(memberSince).getTime()) / (1000 * 60 * 60 * 24))
   );
 }
 
@@ -375,7 +373,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const apps = (useApplications() ?? []) as any[];
   const counts = useMemo(() => computeCounts(apps), [apps]);
-  const daysSinceStart = useMemo(() => computeDaysSinceStart(apps), [apps]);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [silentMode, setSilentMode] = useState(true);
@@ -390,6 +387,11 @@ export default function ProfileScreen() {
     email: "",
     member_since: new Date().toISOString(),
   });
+
+  const daysSinceStart = useMemo(
+    () => computeDaysSinceStart(user.member_since),
+    [user.member_since]
+  );
 
   useEffect(() => {
     (async () => {
