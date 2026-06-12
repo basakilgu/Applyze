@@ -8,7 +8,7 @@ import Svg, { Path } from "react-native-svg";
 import * as DocumentPicker from "expo-document-picker";
 import * as XLSX from "xlsx";
 import { supabase } from "../../lib/supabase";
-import { applicationsStore } from "../../lib/applications";
+import { applicationsStore, normalizeUrl } from "../../lib/applications";
 
 type Row = {
   company_name: string;
@@ -165,20 +165,27 @@ export default function ImportScreen() {
     const stageMap = new Map<string, string>();
     (stages ?? []).forEach((s: any) => { if (s.key) stageMap.set(s.key, s.id); });
 
-    // Tekrar kontrolu: "sirket|pozisyon" anahtari. Hem listede zaten olanlari
-    // hem de dosyanin kendi icindeki tekrarlari atlar.
-    const dedupKey = (c: any, p: any) => `${norm(c)}|${norm(p)}`;
+    // Tekrar kontrolu: sirket + pozisyon + basvuru tarihi + ilan linki.
+    // Sadece sirket|pozisyon kullanmak yanlis pozitif uretiyordu: ayni sirkete
+    // ayni pozisyonla farkli tarihte/ilanla yapilan gercek basvurular
+    // "cakisti" sayilip atlaniyordu. Birebir ayni satirlar yine atlanir.
+    const dateKey = (iso?: string) => (iso ? new Date(iso).toISOString().slice(0, 10) : "");
+    const dedupKey = (c: any, p: any, d?: string, u?: string) =>
+      `${norm(c)}|${norm(p)}|${dateKey(d)}|${u ? normalizeUrl(u) : ""}`;
     const { data: existing } = await supabase
       .from("applications")
-      .select("company_name,position")
+      .select("company_name,position,applied_at,source_url")
+      .eq("user_id", uid)
       .is("deleted_at", null);
-    const seen = new Set<string>((existing ?? []).map((e: any) => dedupKey(e.company_name, e.position)));
+    const seen = new Set<string>(
+      (existing ?? []).map((e: any) => dedupKey(e.company_name, e.position, e.applied_at, e.source_url ?? undefined))
+    );
 
     let ok = 0;
     let skip = 0;
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const key = dedupKey(row.company_name, row.position);
+      const key = dedupKey(row.company_name, row.position, row.applied_at, row.source_url);
       if (seen.has(key)) { skip++; setProgress(i + 1); continue; }
       seen.add(key);
       const stageId = stageMap.get(row.stageKey) ?? stageMap.get("applied") ?? null;
@@ -286,7 +293,7 @@ export default function ImportScreen() {
             <Text style={{ fontSize: 15, color: "#3D5A47", fontFamily: "Inter_600SemiBold", marginBottom: skipped > 0 ? 6 : 12 }}>{done} başvuru içe aktarıldı ✓</Text>
             {skipped > 0 && (
               <Text style={{ fontSize: 13, color: "#8A8278", fontFamily: "Inter_400Regular", marginBottom: 12, textAlign: "center" }}>
-                {skipped} tanesi zaten listende olduğu için atlandı.
+                {skipped} tanesi atlandı: aynı kayıt (şirket, pozisyon, tarih ve link) listende ya da dosyada zaten vardı.
               </Text>
             )}
             <Pressable onPress={() => router.replace("/(tabs)")} style={({ pressed }) => ({ height: 48, paddingHorizontal: 24, backgroundColor: "#3D5A47", borderRadius: 12, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.9 : 1 })}>
