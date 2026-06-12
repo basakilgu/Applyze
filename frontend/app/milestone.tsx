@@ -1,5 +1,5 @@
 // app/milestone.tsx — "Yolculuğum / Eşikler": başvuru yolculuğunun anlamlı özeti.
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -11,6 +11,7 @@ import {
   getCounts,
   formatDateLongTr,
 } from "../lib/applications";
+import { supabase } from "../lib/supabase";
 
 const C = {
   bg: "#FAF8F4",
@@ -42,6 +43,12 @@ function SectionTitle({ children }: { children: string }) {
 export default function MilestoneScreen() {
   const apps = useApplications();
 
+  // "Kaç gündür yoldasın" hesabı için hesabın açılış tarihi (dashboard ile aynı kaynak).
+  const [memberSince, setMemberSince] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMemberSince(data.user?.created_at ?? null));
+  }, []);
+
   const d = useMemo(() => {
     if (!apps || apps.length === 0) return null;
 
@@ -68,21 +75,37 @@ export default function MilestoneScreen() {
     const offer = reached((k) => k === "offer");
 
     const milestones = [
-      { key: "applied", label: "İlk başvuru", at: firstApplied, hint: "Yolculuk başladı" },
+      { key: "applied", label: "İlk başvuru", at: firstApplied as number | null, hint: "Yolculuk başladı" },
       { key: "screening", label: "İlk geri dönüş", at: earliest((k) => k === "screening"), hint: "Biri seni fark etti" },
       { key: "interview", label: "İlk mülakat", at: earliest((k) => k === "interview" || k === "manager"), hint: "İlk açılan kapı" },
       { key: "offer", label: "İlk teklif", at: earliest((k) => k === "offer"), hint: "Emeğin karşılığı" },
     ];
 
+    // Eşik tarihleri kronolojik sırayı bozmasın. İçe aktarılan geçmiş veride her
+    // başvurunun tek aşama geçmişi (changed_at = başvuru tarihi) olduğundan, ör.
+    // "İlk teklif" tarihi "İlk mülakat"tan önce düşebiliyordu. Sırayı koru:
+    let running = 0;
+    for (const m of milestones) {
+      if (m.at != null) {
+        if (m.at < running) m.at = running;
+        running = m.at;
+      }
+    }
+
     const counts = getCounts();
     const metrics = getMetrics();
-    const daysActive = Math.max(1, Math.floor((Date.now() - firstApplied) / DAY));
+    // "Kaç gündür yoldasın": hesabın açılışından bu yana (dashboard ile tutarlı).
+    // Eskiden en eski başvuru tarihinden sayılıyordu; geçmiş tarihli başvuru içe
+    // aktarılınca yeni hesapta bile "149. gün" gibi yanlış değer üretiyordu.
+    const daysActive = memberSince
+      ? Math.max(0, Math.floor((Date.now() - new Date(memberSince).getTime()) / DAY))
+      : 0;
 
     return {
       total, screening, interview, offer, milestones, counts, metrics, daysActive,
       pct: (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0),
     };
-  }, [apps]);
+  }, [apps, memberSince]);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
