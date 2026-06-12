@@ -1225,8 +1225,9 @@ export default function DashboardScreen() {
                     ) : null}
                     {aiResult.suggestions.map((s, idx) => {
                       const katLabels: Record<string, string> = {
-                        momentum: "Momentum",
+                        kesif: "Keşif",
                         guclu_alan: "Güçlü alan",
+                        momentum: "Momentum",
                         darbogaz: "Darboğaz",
                         takip: "Takip",
                         iyi_olus: "İyi oluş",
@@ -1344,7 +1345,7 @@ export default function DashboardScreen() {
                   paddingHorizontal: 4,
                 }}
               >
-                Pusula, başvuru verini yorumlar. Şirket adların paylaşılmaz.
+                Pusula, başvuru verini ve (varsa) CV'nin alanını yorumlar. Şirket adların ve CV metnin paylaşılmaz.
               </Text>
             </View>
           )}

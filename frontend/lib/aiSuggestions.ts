@@ -203,6 +203,20 @@ function buildSummary(apps: any[]): string {
   const bestRole = pickStrong(roleStats, 3);
   const bestSector = pickStrong(sectorStats, 3);
 
+  // EN ÇOK BAŞVURULAN alan/sektör (İLGİ/EĞİLİM sinyali). "En güçlü alan"dan
+  // (çekiş/mülakat oranı) AYRIDIR: kişinin neye yöneldiğini gösterir. Pusula
+  // ikisini (ve CV alanını) karşılaştırıp ilgi-çekiş-kimlik ayrışmasını görür.
+  const pickMostApplied = (stats: Record<string, Funnel>): { name: string; applied: number } | null => {
+    let top: { name: string; applied: number } | null = null;
+    for (const [name, st] of Object.entries(stats)) {
+      if (name === "Diğer") continue;
+      if (!top || st.applied > top.applied) top = { name, applied: st.applied };
+    }
+    return top;
+  };
+  const mostAppliedRole = pickMostApplied(roleStats);
+  const mostAppliedSector = pickMostApplied(sectorStats);
+
   const neighbors: Record<string, string[]> = {
     "Süreç Tasarımı": ["İş Analistliği", "Operasyon", "Ürün Yönetimi"],
     "Analiz / İş Analistliği": ["Süreç Tasarımı", "Veri / Analitik", "Ürün Yönetimi"],
@@ -267,8 +281,11 @@ function buildSummary(apps: any[]): string {
   for (const [r, st] of Object.entries(roleStats)) {
     lines.push(`  - ${r}: ${st.applied} / ${st.responded} / ${st.interview} / ${st.offer} (mülakat oranı yüzde ${pct(st.interview, st.applied)}, güven ${confLabel(st.applied)})`);
   }
+  if (mostAppliedRole) {
+    lines.push(`En çok başvurduğun alan (İLGİ/EĞİLİM sinyali — neye yöneldiğin): ${mostAppliedRole.name} (${mostAppliedRole.applied} başvuru)`);
+  }
   if (bestRole) {
-    lines.push(`En güçlü alanın: ${bestRole.name} — mülakat oranı yüzde ${bestRole.rate} (n=${bestRole.applied}, gerçek oran yüzde ${bestRole.lo}-${bestRole.hi} aralığında, güven ${confLabel(bestRole.applied)})`);
+    lines.push(`En güçlü alanın (GERÇEK ÇEKİŞ — mülakat oranı en yüksek): ${bestRole.name} — mülakat oranı yüzde ${bestRole.rate} (n=${bestRole.applied}, gerçek oran yüzde ${bestRole.lo}-${bestRole.hi} aralığında, güven ${confLabel(bestRole.applied)})`);
     const nb = neighbors[bestRole.name];
     if (nb && nb.length) lines.push(`  Komşu alanlar (keşif için): ${nb.join(", ")}`);
     lines.push(`  Önerilebilecek dağılım: ~yüzde 70 ${bestRole.name} + ~yüzde 30 komşu alan keşfi`);
@@ -280,8 +297,11 @@ function buildSummary(apps: any[]): string {
   for (const [sec, st] of Object.entries(sectorStats)) {
     lines.push(`  - ${sec}: ${st.applied} / ${st.responded} / ${st.interview} / ${st.offer} (mülakat oranı yüzde ${pct(st.interview, st.applied)}, güven ${confLabel(st.applied)})`);
   }
+  if (mostAppliedSector) {
+    lines.push(`En çok başvurduğun sektör (ilgi/eğilim sinyali): ${mostAppliedSector.name} (${mostAppliedSector.applied} başvuru)`);
+  }
   if (bestSector) {
-    lines.push(`En güçlü sektörün: ${bestSector.name} — mülakat oranı yüzde ${bestSector.rate} (n=${bestSector.applied}, güven ${confLabel(bestSector.applied)})`);
+    lines.push(`En güçlü sektörün (gerçek çekiş): ${bestSector.name} — mülakat oranı yüzde ${bestSector.rate} (n=${bestSector.applied}, güven ${confLabel(bestSector.applied)})`);
   } else {
     lines.push(`En güçlü sektör: henüz net değil (sektör başına yeterli başvuru yok).`);
   }
