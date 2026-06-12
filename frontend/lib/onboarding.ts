@@ -1,20 +1,16 @@
 // lib/onboarding.ts
 // Onboarding'in bir kez gosterilmesi icin "gorulduyse atla" bayragi.
-// Native: SecureStore. Web: localStorage. Hata olursa "gorulmedi" varsayar.
+// HESAP bazli: bayrak kullanicinin user_metadata.onboarded alaninda saklanir.
+// Boylece her yeni kullanici, hangi cihaz/tarayici olursa olsun, onboarding'i
+// bir kez gorur (eskiden cihaz bazli localStorage'daydi; ayni tarayicida ikinci
+// kullanici hic gormuyordu). Oturum yoksa "gorulmedi" varsayilir.
 
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
-
-const KEY = "hasSeenOnboarding";
+import { supabase } from "./supabase";
 
 export async function getHasSeenOnboarding(): Promise<boolean> {
   try {
-    if (Platform.OS === "web") {
-      if (typeof window === "undefined") return false;
-      return window.localStorage.getItem(KEY) === "true";
-    }
-    const value = await SecureStore.getItemAsync(KEY);
-    return value === "true";
+    const { data } = await supabase.auth.getUser();
+    return data.user?.user_metadata?.onboarded === true;
   } catch {
     return false;
   }
@@ -22,12 +18,9 @@ export async function getHasSeenOnboarding(): Promise<boolean> {
 
 export async function setHasSeenOnboarding(): Promise<void> {
   try {
-    if (Platform.OS === "web") {
-      if (typeof window !== "undefined") window.localStorage.setItem(KEY, "true");
-      return;
-    }
-    await SecureStore.setItemAsync(KEY, "true");
+    // user_metadata'ya yazar; mevcut alanlar (ör. full_name) korunur (merge).
+    await supabase.auth.updateUser({ data: { onboarded: true } });
   } catch {
-    // sessizce gec — bayrak yazilamazsa onboarding tekrar gosterilir, kritik degil
+    // sessizce gec — yazilamazsa onboarding tekrar gosterilir, kritik degil
   }
 }
