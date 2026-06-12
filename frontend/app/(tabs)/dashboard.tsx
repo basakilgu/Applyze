@@ -132,10 +132,17 @@ function computeCounts(apps: any[]) {
   };
 }
 
-// Apps'ten dashboard verilerini hesapla
-function computeDashboardData(apps: any[]) {
-  const now = Date.now();
+// Hesap açılışından bu yana geçen gün sayısı. Eskiden en eski başvurunun
+// tarihinden hesaplanıyordu; geçmiş tarihli başvurular içe aktarılınca
+// "gün 0"daki kullanıcıya "gün 88" gösteriyordu.
+export function daysSinceMember(memberSince?: string | null): number {
+  if (!memberSince) return 0;
+  const ms = Date.now() - new Date(memberSince).getTime();
+  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
 
+// Apps'ten dashboard verilerini hesapla
+function computeDashboardData(apps: any[], memberSince?: string | null) {
   const reachedApplied = apps.length;
   const reachedScreening = apps.filter(
     (a) =>
@@ -157,16 +164,7 @@ function computeDashboardData(apps: any[]) {
     )
     .slice(0, 3);
 
-  const sortedByApplied = [...apps].sort(
-    (a, b) =>
-      new Date(a.applied_at).getTime() - new Date(b.applied_at).getTime()
-  );
-  const firstApp = sortedByApplied[0];
-  const daysSinceStart = firstApp
-    ? Math.floor(
-        (now - new Date(firstApp.applied_at).getTime()) / (1000 * 60 * 60 * 24)
-      )
-    : 0;
+  const daysSinceStart = daysSinceMember(memberSince);
 
   return {
     funnel: {
@@ -572,6 +570,7 @@ export default function DashboardScreen() {
 
   // Gerçek kullanıcı adını Supabase'ten al (sabit "Başak" yerine)
   const [userName, setUserName] = useState("");
+  const [memberSince, setMemberSince] = useState<string | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const email = data.user?.email ?? "";
@@ -579,11 +578,12 @@ export default function DashboardScreen() {
         (data.user?.user_metadata?.full_name as string | undefined) ??
         (email ? email.split("@")[0] : "");
       setUserName(name);
+      setMemberSince(data.user?.created_at ?? null);
     });
   }, []);
 
   const counts = useMemo(() => computeCounts(apps), [apps]);
-  const data = useMemo(() => computeDashboardData(apps), [apps]);
+  const data = useMemo(() => computeDashboardData(apps, memberSince), [apps, memberSince]);
   // ===========================================================
   // AI ÖNERİLERİ (Gemini — ai-suggestions Edge Function)
   // ===========================================================

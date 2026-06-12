@@ -265,6 +265,25 @@ async function loadFromSupabase() {
   }
 }
 
+// Oturum değişince modül seviyesindeki cache'i sıfırla. Aksi halde çıkış
+// yapıp yeni hesapla girince önceki kullanıcının verileri ekranda kalıyor
+// (_loaded=true olduğu için hook'lar yeniden yükleme yapmıyordu).
+let _lastUserId: string | null = null;
+supabase.auth.onAuthStateChange((_event, session) => {
+  const uid = session?.user?.id ?? null;
+  if (uid === _lastUserId) return; // token yenileme vb. — kullanıcı aynı
+  _lastUserId = uid;
+  _cache = [];
+  _stagesCache = [];
+  _loaded = false;
+  _loading = false;
+  _error = null;
+  notify();
+  // Yeni kullanıcı girdiyse verisini hemen yükle. setTimeout: supabase-js,
+  // onAuthStateChange callback'i içinde doğrudan async çağrı önermiyor.
+  if (uid) setTimeout(() => loadFromSupabase(), 0);
+});
+
 // ============================================================================
 // PUBLIC STORE — mockStore ile aynı API
 // ============================================================================
