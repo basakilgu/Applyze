@@ -42,7 +42,7 @@ export default function PrivacyScreen() {
       <StatusBar style="dark" />
       <SafeAreaView edges={["top"]}>
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, height: 52 }}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={{ padding: 6, marginRight: 4 }}>
+          <Pressable onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/(tabs)/profile"); }} hitSlop={10} style={{ padding: 6, marginRight: 4 }}>
             <BackIcon />
           </Pressable>
           <Text style={{ fontSize: 17, color: "#1F1B16", fontFamily: "Inter_600SemiBold" }}>
@@ -116,7 +116,7 @@ export default function PrivacyScreen() {
           korumak için makul teknik ve idari tedbirleri uygularız.
         </P>
 
-        <H>8. Haklarmın</H>
+        <H>8. Haklarım</H>
         <P>
           KVKK m.11 ve GDPR kapsamında; verilerine erişme, düzeltme, silme ve işlemeye itiraz etme haklarına
           sahipsin. Hesabını ve tüm verilerini uygulama içinden Profil ekranındaki "Hesabı sil" seçeneğiyle

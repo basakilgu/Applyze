@@ -382,7 +382,8 @@ export const applicationsStore = {
     if (updates.position !== undefined) dbUpdates.position = updates.position;
     if (updates.location !== undefined) dbUpdates.location = updates.location ?? null;
     if (updates.platform !== undefined) dbUpdates.platform = updates.platform;
-    if (updates.source_url !== undefined) dbUpdates.source_url = updates.source_url ?? null;
+    if (updates.source_url !== undefined)
+      dbUpdates.source_url = updates.source_url ? normalizeUrl(updates.source_url) : null;
     if (updates.is_favorite !== undefined) dbUpdates.is_favorite = updates.is_favorite;
     if (updates.applied_at !== undefined) dbUpdates.applied_at = updates.applied_at;
 

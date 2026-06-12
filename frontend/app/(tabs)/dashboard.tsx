@@ -1,9 +1,9 @@
 // app/(tabs)/dashboard.tsx — Özet ekranı
 // Sadece useApplications'ı dışarıdan alıyor. Tüm helper'lar ve UI bileşenleri içeride.
 
-import React, { useMemo, useId, useState, useEffect } from "react";
+import React, { useMemo, useId, useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Svg, { Path, Circle, Defs, RadialGradient, Stop } from "react-native-svg";
@@ -143,17 +143,25 @@ export function daysSinceMember(memberSince?: string | null): number {
 
 // Apps'ten dashboard verilerini hesapla
 function computeDashboardData(apps: any[], memberSince?: string | null) {
+  // Bir başvurunun "uğradığı" tüm aşamalar: geçmiş + şu anki aşama.
+  // Böylece geçmiş kaydı olmayan (ör. import edilen) ya da doğrudan ileri
+  // aşamaya konmuş başvurular da funnel'da doğru sayılır ve üstteki metrik
+  // şeridiyle tutarlı olur. Huni kümülatiftir (ileri aşama, öncekini kapsar).
+  const reachedSet = (a: any): Set<string> => {
+    const hist = Array.isArray(a.stage_history) ? a.stage_history : [];
+    const s = new Set<string>(hist.map((h: any) => h.stage_key));
+    if (a.current_stage) s.add(a.current_stage);
+    return s;
+  };
   const reachedApplied = apps.length;
-  const reachedScreening = apps.filter(
-    (a) =>
-      Array.isArray(a.stage_history) &&
-      a.stage_history.some((h: any) => h.stage_key === "screening")
-  ).length;
-  const reachedInterview = apps.filter(
-    (a) =>
-      Array.isArray(a.stage_history) &&
-      a.stage_history.some((h: any) => h.stage_key === "interview")
-  ).length;
+  const reachedScreening = apps.filter((a) => {
+    const r = reachedSet(a);
+    return r.has("screening") || r.has("interview") || r.has("manager") || r.has("offer");
+  }).length;
+  const reachedInterview = apps.filter((a) => {
+    const r = reachedSet(a);
+    return r.has("interview") || r.has("manager") || r.has("offer");
+  }).length;
   const reachedOffer = apps.filter((a) => a.current_stage === "offer").length;
 
   const recentMoves = [...apps]
@@ -571,16 +579,20 @@ export default function DashboardScreen() {
   // Gerçek kullanıcı adını Supabase'ten al (sabit "Başak" yerine)
   const [userName, setUserName] = useState("");
   const [memberSince, setMemberSince] = useState<string | null>(null);
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const email = data.user?.email ?? "";
-      const name =
-        (data.user?.user_metadata?.full_name as string | undefined) ??
-        (email ? email.split("@")[0] : "");
-      setUserName(name);
-      setMemberSince(data.user?.created_at ?? null);
-    });
-  }, []);
+  // useFocusEffect: ekran odaklandıkça (ör. profilde isim değişip geri dönünce)
+  // selamlamadaki ad tazelensin. Tab unmount olmadığından mount-only çalışmazdı.
+  useFocusEffect(
+    useCallback(() => {
+      supabase.auth.getUser().then(({ data }) => {
+        const email = data.user?.email ?? "";
+        const name =
+          (data.user?.user_metadata?.full_name as string | undefined) ??
+          (email ? email.split("@")[0] : "");
+        setUserName(name);
+        setMemberSince(data.user?.created_at ?? null);
+      });
+    }, []),
+  );
 
   const counts = useMemo(() => computeCounts(apps), [apps]);
   const data = useMemo(() => computeDashboardData(apps, memberSince), [apps, memberSince]);
@@ -589,6 +601,14 @@ export default function DashboardScreen() {
   // ===========================================================
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  // Veri parmak izi: id + aşama + güncellenme. apps dizisi her render'da yeni
+  // referans olduğundan doğrudan [apps]'e bağlanılamaz; bu stabil string ise
+  // yalnız içerik değişince değişir → effect gereksiz yere tetiklenmez.
+  const aiFingerprint = useMemo(
+    () => apps.map((a) => `${a.id}:${a.current_stage}:${a.updated_at}`).join("|"),
+    [apps],
+  );
 
   useEffect(() => {
     // En az 3 başvuru yoksa AI çağırma (veri çok az, anlamlı yorum çıkmaz)
@@ -612,8 +632,12 @@ export default function DashboardScreen() {
     return () => {
       cancelled = true;
     };
-    // apps değişince (yeni başvuru, aşama güncellemesi) öneriler yenilenir
-  }, [apps.length]);
+    // Veri parmak iziyle tetiklenir: sadece sayı değil, AŞAMA değişince de
+    // öneriler tazelenir (eskiden [apps.length] olduğu için aşama güncellemesi
+    // Pusula metnini bayat bırakıyordu). Cache katmanı gereksiz Gemini çağrısını
+    // zaten önlüyor, bu yüzden ek ağ maliyeti yok.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiFingerprint]);
 
   const weekStats = useMemo(() => {
     const now = Date.now();
@@ -644,7 +668,8 @@ export default function DashboardScreen() {
     if (apps.length === 0) return null;
     const platformCount: Record<string, number> = {};
     apps.forEach((a) => {
-      platformCount[a.platform] = (platformCount[a.platform] || 0) + 1;
+      const pf = a.platform || "other";
+      platformCount[pf] = (platformCount[pf] || 0) + 1;
     });
     const topPlatform = Object.entries(platformCount).sort(
       (a, b) => b[1] - a[1]
